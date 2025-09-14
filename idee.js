@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function() {
   modal.style.alignItems = "center";
   modal.style.zIndex = 1000;
   modal.innerHTML = `
-    <div style="background:white; padding:20px; border-radius:12px; max-width:400px; width:90%; position:relative;">
+    <div style="background:white; padding:20px; border-radius:12px; max-width:500px; width:90%; position:relative; max-height:90%; overflow:auto;">
       <button id="modalCloseBtn" style="position:absolute; top:10px; right:10px; background:#e53935; border:none; color:white; font-size:1em; width:25px; height:25px; border-radius:50%; cursor:pointer;">×</button>
       <div id="modalContent"></div>
     </div>
@@ -101,11 +101,16 @@ document.addEventListener("DOMContentLoaded", function() {
       photoData = await readImageAsDataURL(this.photo.files[0]);
     }
 
+    let age = this.ageRange.value;
+    if (age === "custom") {
+      age = this.customAge.value || "Non défini";
+    }
+
     const newActivity = {
       theme: selectedThemeName,
       name: this.activityName.value,
       duration: this.duration.value,
-      ageRange: this.ageRange.value,
+      ageRange: age,
       materials: this.materials.value,
       color: this.color.value,
       photo: photoData
@@ -152,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function() {
       card.innerHTML = `
         <button class="delete-btn" data-index="${index}" style="position:absolute; top:5px; right:5px; font-size:1em; width:20px; height:20px;">×</button>
         <strong>${activity.name}</strong><br>
-        ${activity.photo ? `<img src="${activity.photo}" alt="${activity.name}" style="width:100%; margin-top:5px; border-radius:6px;">` : ""}
+        ${activity.photo ? `<img src="${activity.photo}" alt="${activity.name}" style="max-width:150px; max-height:150px; margin-top:5px; border-radius:6px; cursor:pointer;">` : ""}
         <div class="badges">
           ${activity.duration ? `<span class="badge">⏱ ${activity.duration} min</span>` : ""}
           ${activity.ageRange ? `<span class="badge">👶 ${activity.ageRange}</span>` : ""}
@@ -172,11 +177,11 @@ document.addEventListener("DOMContentLoaded", function() {
         }
       });
 
-      // Cliquer sur la carte ouvre le modal
+      // Cliquer sur la carte ouvre le modal avec détails
       card.addEventListener("click", () => {
         modalContent.innerHTML = `
           <h3>${activity.name}</h3>
-          ${activity.photo ? `<img src="${activity.photo}" alt="${activity.name}" style="width:100%; margin-bottom:10px; border-radius:6px;">` : ""}
+          ${activity.photo ? `<img src="${activity.photo}" alt="${activity.name}" style="width:100%; max-height:400px; object-fit:contain; margin-bottom:10px; border-radius:6px;">` : ""}
           <p><strong>Durée :</strong> ${activity.duration || '-' } min</p>
           <p><strong>Tranche d'âge :</strong> ${activity.ageRange || '-'}</p>
           <p><strong>Matériel :</strong> ${activity.materials || '-'}</p>
@@ -184,6 +189,19 @@ document.addEventListener("DOMContentLoaded", function() {
         `;
         modal.style.display = "flex";
       });
+
+      // Cliquer sur l'aperçu ouvre la version plus grande
+      const imgPreview = card.querySelector("img");
+      if(imgPreview) {
+        imgPreview.addEventListener("click", (e) => {
+          e.stopPropagation();
+          modalContent.innerHTML = `
+            <h3>${activity.name}</h3>
+            <img src="${activity.photo}" alt="${activity.name}" style="width:100%; max-height:400px; object-fit:contain; margin-bottom:10px; border-radius:6px;">
+          `;
+          modal.style.display = "flex";
+        });
+      }
     });
   }
 
