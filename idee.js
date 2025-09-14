@@ -53,6 +53,32 @@ deleteThemeBtn.addEventListener("click", () => {
   renderActivities();
 });
 
+const ageRangeSelect = document.getElementById("ageRangeSelect");
+const customAgeInput = document.getElementById("customAgeInput");
+const activityPhotoInput = document.getElementById("activityPhoto");
+
+// Affiche le champ personnalisé si sélectionné
+ageRangeSelect.addEventListener("change", () => {
+  if(ageRangeSelect.value === "custom"){
+    customAgeInput.classList.remove("hidden");
+  } else {
+    customAgeInput.classList.add("hidden");
+    customAgeInput.value = "";
+  }
+});
+
+// Fonction pour lire l'image en base64 pour stockage local
+function readImageAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = e => reject(e);
+    reader.readAsDataURL(file);
+  });
+}
+
+
+  
   // Sauvegarde une nouvelle activité pour le thème sélectionné
   activityForm.addEventListener("submit", function(e) {
     e.preventDefault();
@@ -147,3 +173,4 @@ deleteThemeBtn.addEventListener("click", () => {
   renderActivities();
 
 });
+
