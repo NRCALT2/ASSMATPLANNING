@@ -13,81 +13,64 @@ document.addEventListener("DOMContentLoaded", () => {
     closeBtn.addEventListener("click", () => popup.classList.add("hidden"));
 
     // -----------------------------
-    // 1️⃣ Afficher les numéros de jours correctement
+    // 1️⃣ Affichage des numéros de jours
     // -----------------------------
     const today = new Date();
     const year = today.getFullYear();
-    const month = today.getMonth(); // 0 = janvier
-    const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 = dimanche
+    const month = today.getMonth();
+    const firstDay = new Date(year, month, 1).getDay(); // 0 = dimanche
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     calendarCells.forEach((cell, index) => {
-        cell.innerHTML = ""; // vide la cellule
-        let dayNumber = index - (firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1) + 1;
-        if(dayNumber > 0 && dayNumber <= daysInMonth){
+        cell.innerHTML = "";
+        let dayNum = index - (firstDay === 0 ? 6 : firstDay - 1) + 1;
+        if(dayNum > 0 && dayNum <= daysInMonth){
             const span = document.createElement("span");
-            span.textContent = dayNumber;
+            span.textContent = dayNum;
             span.classList.add("day-number");
             cell.appendChild(span);
-            cell.dataset.day = dayNumber;
+            cell.dataset.day = dayNum;
         } else {
             cell.dataset.day = "";
         }
     });
 
     // -----------------------------
-    // 2️⃣ Placer les activités selon la période du thème
+    // 2️⃣ Placer activités (exemple)
     // -----------------------------
-    const themes = JSON.parse(localStorage.getItem("themes")) || [];
     const activities = JSON.parse(localStorage.getItem("activities")) || [];
 
-    themes.forEach(theme => {
-        const themeActivities = activities.filter(a => a.theme === theme.name);
+    activities.forEach(act => {
+        // Ici on suppose act.date = "YYYY-MM-DD"
+        const actDate = new Date(act.date);
+        if(actDate.getMonth() !== month) return;
+        const dayNum = actDate.getDate();
+        const cell = Array.from(calendarCells).find(td => td.dataset.day == dayNum);
+        if(!cell) return;
 
-        if(!theme.startDate || !theme.endDate) return;
+        const div = document.createElement("div");
+        div.textContent = act.name;
+        div.classList.add("item");
+        div.style.cursor = "pointer";
 
-        const start = new Date(theme.startDate);
-        const end = new Date(theme.endDate);
+        div.dataset.nom = act.name;
+        div.dataset.theme = act.theme;
+        div.dataset.duration = act.duration;
+        div.dataset.age = act.ageRange;
+        div.dataset.materials = act.materials;
+        div.dataset.image = act.photo;
 
-        for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)){
-            if(d.getMonth() !== month) continue; // ignore autre mois
-            const dayNum = d.getDate();
-            const cell = Array.from(calendarCells).find(td => td.dataset.day == dayNum);
-            if(!cell) continue;
+        cell.appendChild(div);
 
-            themeActivities.forEach(activity => {
-                // Évite les doublons
-                const exists = Array.from(cell.querySelectorAll(".item"))
-                                    .some(div => div.dataset.nom === activity.name);
-                if(exists) return;
-
-                const div = document.createElement("div");
-                div.textContent = activity.name;
-                div.classList.add("item");
-                div.style.cursor = "pointer";
-
-                div.dataset.nom = activity.name;
-                div.dataset.theme = activity.theme;
-                div.dataset.duration = activity.duration;
-                div.dataset.age = activity.ageRange;
-                div.dataset.materials = activity.materials;
-                div.dataset.image = activity.photo;
-
-                cell.appendChild(div);
-
-                // Clique pour popup
-                div.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    detailPhoto.src = div.dataset.image || "";
-                    detailName.textContent = div.dataset.nom || "";
-                    detailTheme.textContent = div.dataset.theme || "";
-                    detailDuration.textContent = div.dataset.duration || "";
-                    detailAge.textContent = div.dataset.age || "";
-                    detailMaterials.textContent = div.dataset.materials || "";
-
-                    popup.classList.remove("hidden");
-                });
-            });
-        }
+        div.addEventListener("click", (e) => {
+            e.stopPropagation();
+            detailPhoto.src = div.dataset.image || "";
+            detailName.textContent = div.dataset.nom || "";
+            detailTheme.textContent = div.dataset.theme || "";
+            detailDuration.textContent = div.dataset.duration || "";
+            detailAge.textContent = div.dataset.age || "";
+            detailMaterials.textContent = div.dataset.materials || "";
+            popup.classList.remove("hidden");
+        });
     });
 });
