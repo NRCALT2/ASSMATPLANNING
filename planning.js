@@ -14,31 +14,65 @@ document.addEventListener("DOMContentLoaded", () => {
         popup.classList.add("hidden");
     });
 
-    // Récupérer les activités depuis localStorage
+    // 1️⃣ Afficher les numéros de jours
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth(); // 0 = janvier
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDay = new Date(year, month, 1).getDay(); // 0 = dimanche
+
+    calendarCells.forEach((cell, index) => {
+        let dayNum = index - (firstDay === 0 ? 6 : firstDay - 1) + 1; // ajustement pour lundi=0
+        if (dayNum > 0 && dayNum <= daysInMonth) {
+            cell.textContent = dayNum;
+            cell.dataset.day = dayNum; // stocke le numéro du jour
+        } else {
+            cell.textContent = "";
+        }
+    });
+
+    // 2️⃣ Récupérer les activités depuis localStorage
     const activities = JSON.parse(localStorage.getItem("activities")) || [];
 
-    // Placer les activités dans les cellules du calendrier
-    activities.forEach((activity, index) => {
-        const cell = calendarCells[index % calendarCells.length]; // répartir sur les cellules
-        cell.textContent = activity.name;
-        cell.classList.add("item");
+    // 3️⃣ Placer les activités dans les cellules du calendrier
+    activities.forEach(activity => {
+        // Vérifier que l'activité a une propriété "day"
+        // Sinon placer dans la première cellule disponible
+        let dayCell;
+        if(activity.day) {
+            dayCell = Array.from(calendarCells).find(td => td.dataset.day == activity.day);
+        } 
+        if(!dayCell) {
+            dayCell = Array.from(calendarCells).find(td => td.textContent !== "");
+        }
+        if(!dayCell) return;
+
+        // Créer l'élément activité
+        const div = document.createElement("div");
+        div.textContent = activity.name;
+        div.classList.add("item");
+        div.style.cursor = "pointer";
 
         // Ajouter les data-* pour le popup
-        cell.dataset.nom = activity.name;
-        cell.dataset.theme = activity.theme;
-        cell.dataset.duration = activity.duration;
-        cell.dataset.age = activity.ageRange;
-        cell.dataset.materials = activity.materials;
-        cell.dataset.image = activity.photo;
+        div.dataset.nom = activity.name;
+        div.dataset.theme = activity.theme;
+        div.dataset.duration = activity.duration;
+        div.dataset.age = activity.ageRange;
+        div.dataset.materials = activity.materials;
+        div.dataset.image = activity.photo;
 
-        // Clic sur la cellule ouvre le popup
-        cell.addEventListener("click", () => {
-            detailPhoto.src = cell.dataset.image || "";
-            detailName.textContent = cell.dataset.nom || "";
-            detailTheme.textContent = cell.dataset.theme || "";
-            detailDuration.textContent = cell.dataset.duration || "";
-            detailAge.textContent = cell.dataset.age || "";
-            detailMaterials.textContent = cell.dataset.materials || "";
+        // Ajouter à la cellule
+        dayCell.appendChild(div);
+
+        // Clic sur l'activité ouvre le popup
+        div.addEventListener("click", (e) => {
+            e.stopPropagation(); // empêche propagation au td
+            detailPhoto.src = div.dataset.image || "";
+            detailName.textContent = div.dataset.nom || "";
+            detailTheme.textContent = div.dataset.theme || "";
+            detailDuration.textContent = div.dataset.duration || "";
+            detailAge.textContent = div.dataset.age || "";
+            detailMaterials.textContent = div.dataset.materials || "";
 
             popup.classList.remove("hidden");
         });
