@@ -10,6 +10,36 @@ document.addEventListener("DOMContentLoaded", function() {
     themeFormContainer.classList.toggle("hidden");
   });
 
+  // Modal pour afficher activité
+  const modal = document.createElement("div");
+  modal.id = "activityModal";
+  modal.style.display = "none";
+  modal.style.position = "fixed";
+  modal.style.top = 0;
+  modal.style.left = 0;
+  modal.style.width = "100%";
+  modal.style.height = "100%";
+  modal.style.background = "rgba(0,0,0,0.5)";
+  modal.style.justifyContent = "center";
+  modal.style.alignItems = "center";
+  modal.style.zIndex = 1000;
+  modal.innerHTML = `
+    <div style="background:white; padding:20px; border-radius:12px; max-width:400px; width:90%; position:relative;">
+      <button id="modalCloseBtn" style="position:absolute; top:10px; right:10px; background:#e53935; border:none; color:white; font-size:1em; width:25px; height:25px; border-radius:50%; cursor:pointer;">×</button>
+      <div id="modalContent"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const modalContent = document.getElementById("modalContent");
+  const modalCloseBtn = document.getElementById("modalCloseBtn");
+  modalCloseBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+
   // Sauvegarde un nouveau thème
   themeForm.addEventListener("submit", function(e) {
     e.preventDefault();
@@ -27,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function() {
     themeFormContainer.classList.add("hidden");
   });
 
-  // Bouton pour supprimer le thème sélectionné
+  // Supprimer thème
   const deleteThemeBtn = document.getElementById("deleteThemeBtn");
   deleteThemeBtn.addEventListener("click", () => {
     const selectedThemeName = themeSelect.value;
@@ -37,22 +67,18 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     if (!confirm(`Êtes-vous sûr de vouloir supprimer le thème "${selectedThemeName}" et toutes ses activités ?`)) return;
 
-    // Supprimer le thème du localStorage
     let themes = JSON.parse(localStorage.getItem("themes")) || [];
     themes = themes.filter(t => t.name !== selectedThemeName);
     localStorage.setItem("themes", JSON.stringify(themes));
 
-    // Supprimer toutes les activités associées à ce thème
     let activities = JSON.parse(localStorage.getItem("activities")) || [];
     activities = activities.filter(a => a.theme !== selectedThemeName);
     localStorage.setItem("activities", JSON.stringify(activities));
 
-    // Mettre à jour l'affichage
     populateThemeSelect();
     renderActivities();
   });
 
-  // Fonction pour lire l'image en Data URL
   function readImageAsDataURL(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -62,7 +88,6 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 
-  // Sauvegarde une nouvelle activité pour le thème sélectionné
   activityForm.addEventListener("submit", async function(e) {
     e.preventDefault();
     const selectedThemeName = themeSelect.value;
@@ -94,10 +119,8 @@ document.addEventListener("DOMContentLoaded", function() {
     activityForm.reset();
   });
 
-  // Gère le changement de thème dans la liste déroulante
   themeSelect.addEventListener("change", renderActivities);
 
-  // Affiche les thèmes dans la liste déroulante
   function populateThemeSelect() {
     let themes = JSON.parse(localStorage.getItem("themes")) || [];
     themeSelect.innerHTML = '<option value="">-- Choisir un thème --</option>';
@@ -107,12 +130,9 @@ document.addEventListener("DOMContentLoaded", function() {
       option.textContent = theme.name;
       themeSelect.appendChild(option);
     });
-    if (themes.length > 0) {
-      themeSelect.value = themes[0].name;
-    }
+    if (themes.length > 0) themeSelect.value = themes[0].name;
   }
 
-  // Affiche les activités pour le thème sélectionné
   function renderActivities() {
     const selectedThemeName = themeSelect.value;
     const activities = JSON.parse(localStorage.getItem("activities")) || [];
@@ -130,7 +150,7 @@ document.addEventListener("DOMContentLoaded", function() {
       card.style.background = activity.color;
 
       card.innerHTML = `
-        <button class="delete-btn" data-index="${index}">❌</button>
+        <button class="delete-btn" data-index="${index}" style="position:absolute; top:5px; right:5px; font-size:1em; width:20px; height:20px;">×</button>
         <strong>${activity.name}</strong><br>
         ${activity.photo ? `<img src="${activity.photo}" alt="${activity.name}" style="width:100%; margin-top:5px; border-radius:6px;">` : ""}
         <div class="badges">
@@ -141,38 +161,32 @@ document.addEventListener("DOMContentLoaded", function() {
       `;
       ideasList.appendChild(card);
 
-      // Cliquer sur la carte pour afficher toutes les infos
-      card.addEventListener("click", (e) => {
-        if (e.target.classList.contains("delete-btn")) return;
-        let info = `
-Nom : ${activity.name}
-Durée : ${activity.duration || '-'} min
-Tranche d'âge : ${activity.ageRange || '-'}
-Matériel : ${activity.materials || '-'}
-Couleur : ${activity.color}
-`;
-        if(activity.photo) info += "Photo : (visible dans la carte)\n";
-        alert(info);
-      });
-    });
-
-    // Supprimer une activité
-    document.querySelectorAll(".delete-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        let indexToRemove = e.target.dataset.index;
-        const originalIndex = activities.findIndex(a => a.theme === selectedThemeName && a.name === filteredActivities[indexToRemove].name);
+      // Suppression
+      card.querySelector(".delete-btn").addEventListener("click", (e) => {
+        e.stopPropagation(); // empêche le clic sur la carte
+        const originalIndex = activities.findIndex(a => a.theme === selectedThemeName && a.name === filteredActivities[index].name);
         if (originalIndex > -1) {
           activities.splice(originalIndex, 1);
           localStorage.setItem("activities", JSON.stringify(activities));
           renderActivities();
         }
       });
+
+      // Cliquer sur la carte ouvre le modal
+      card.addEventListener("click", () => {
+        modalContent.innerHTML = `
+          <h3>${activity.name}</h3>
+          ${activity.photo ? `<img src="${activity.photo}" alt="${activity.name}" style="width:100%; margin-bottom:10px; border-radius:6px;">` : ""}
+          <p><strong>Durée :</strong> ${activity.duration || '-' } min</p>
+          <p><strong>Tranche d'âge :</strong> ${activity.ageRange || '-'}</p>
+          <p><strong>Matériel :</strong> ${activity.materials || '-'}</p>
+          <p><strong>Couleur :</strong> ${activity.color}</p>
+        `;
+        modal.style.display = "flex";
+      });
     });
   }
 
-  // Initialisation
   populateThemeSelect();
   renderActivities();
 });
-
-
