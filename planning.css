@@ -341,3 +341,12 @@ tbody td:active {
 
 }
 
+.day-number {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #000;
+}
+
+
+
