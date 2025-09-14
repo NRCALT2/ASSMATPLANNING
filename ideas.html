@@ -40,32 +40,37 @@
     <section class="form-section">
       <h2>Nouvelle activité :</h2>
 
-      <form id="activityForm">
-        <label>Activité :
-          <input type="text" name="activityName" placeholder="Pâte à sel..." required>
-        </label>
-        <label>Durée (min) :
-          <input type="number" name="duration" placeholder="15">
-        </label>
-        <label>Tranche d’âge :
-          <select name="ageRange">
-            <option value="">-- Choisir --</option>
-            <option>0-1 an</option>
-            <option>1-2 ans</option>
-            <option>2-3 ans</option>
-            <option>3-4 ans</option>
-            <option>4+ ans</option>
-            <option>Personalisé</option>
-          </select>
-        </label>
-        <label>Matériel :
-          <textarea name="materials" placeholder="Peinture, pâte à modeler..."></textarea>
-        </label>
-        <label>Couleur :
-          <input type="color" name="color" value="#4caf50">
-        </label>
-        <button type="submit" class="submit">Sauvegarder l'activité</button> 
-      </form>
+     <form id="activityForm">
+  <label>Activité :
+    <input type="text" name="activityName" placeholder="Pâte à sel..." required>
+  </label>
+  <label>Durée (min) :
+    <input type="number" name="duration" placeholder="15">
+  </label>
+  <label>Tranche d’âge :
+    <select name="ageRange" id="ageRangeSelect">
+      <option value="">-- Choisir --</option>
+      <option>0-1 an</option>
+      <option>1-2 ans</option>
+      <option>2-3 ans</option>
+      <option>3-4 ans</option>
+      <option>4+ ans</option>
+      <option value="custom">Personalisé</option>
+    </select>
+    <input type="text" id="customAgeInput" placeholder="Entrez l'âge" class="hidden" style="margin-top:5px;">
+  </label>
+  <label>Matériel :
+    <textarea name="materials" placeholder="Peinture, pâte à modeler..."></textarea>
+  </label>
+  <label>Couleur :
+    <input type="color" name="color" value="#4caf50">
+  </label>
+  <label>Photo :
+    <input type="file" name="photo" id="activityPhoto" accept="image/*">
+  </label>
+  <button type="submit" class="submit">Sauvegarder l'activité</button> 
+</form>
+
     </section>
 
     <h2>Mes idées</h2>
@@ -76,4 +81,5 @@
 </body>
 
 </html>
+
 
