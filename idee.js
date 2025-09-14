@@ -26,6 +26,32 @@ document.addEventListener("DOMContentLoaded", function() {
     themeForm.reset();
     themeFormContainer.classList.add("hidden");
   });
+  
+// Bouton pour supprimer le thème sélectionné
+const deleteThemeBtn = document.getElementById("deleteThemeBtn");
+deleteThemeBtn.addEventListener("click", () => {
+  const selectedThemeName = themeSelect.value;
+  if (!selectedThemeName) {
+    alert("Veuillez sélectionner un thème à supprimer.");
+    return;
+  }
+
+  if (!confirm(`Êtes-vous sûr de vouloir supprimer le thème "${selectedThemeName}" et toutes ses activités ?`)) return;
+
+  // Supprimer le thème du localStorage
+  let themes = JSON.parse(localStorage.getItem("themes")) || [];
+  themes = themes.filter(t => t.name !== selectedThemeName);
+  localStorage.setItem("themes", JSON.stringify(themes));
+
+  // Supprimer toutes les activités associées à ce thème
+  let activities = JSON.parse(localStorage.getItem("activities")) || [];
+  activities = activities.filter(a => a.theme !== selectedThemeName);
+  localStorage.setItem("activities", JSON.stringify(activities));
+
+  // Mettre à jour l'affichage
+  populateThemeSelect();
+  renderActivities();
+});
 
   // Sauvegarde une nouvelle activité pour le thème sélectionné
   activityForm.addEventListener("submit", function(e) {
@@ -119,4 +145,5 @@ document.addEventListener("DOMContentLoaded", function() {
   // Initialisation
   populateThemeSelect();
   renderActivities();
+
 });
