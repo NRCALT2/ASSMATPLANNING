@@ -129,29 +129,76 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const calendar = new Calendar();
 
-    function openPopup(dateStr){
-        selectedDate = dateStr;
-        const popup = document.getElementById('popup');
-        if(popup) popup.classList.remove('hidden');
+   function openPopup(dateStr) {
+    selectedDate = dateStr;
+    const popup = document.getElementById('popup');
+    if (popup) popup.classList.remove('hidden');
 
-        const activitySelect = document.getElementById('activitySelect');
-        const delBtn = document.getElementById('deleteBtn');
-        if(!activitySelect) return;
+    const activitySelect = document.getElementById('activitySelect');
+    const delBtn = document.getElementById('deleteBtn');
+    if (!activitySelect) return;
 
-        const list = normalizeActivities();
-        activitySelect.innerHTML = '';
-        if(list.length === 0){
+    // Liste des activités
+    const list = normalizeActivities();
+    activitySelect.innerHTML = '';
+    if (list.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Aucune activité';
+        opt.disabled = true;
+        activitySelect.appendChild(opt);
+    } else {
+        list.forEach(a => {
             const opt = document.createElement('option');
-            opt.value=''; opt.textContent='Aucune activité'; opt.disabled=true;
+            opt.value = a.id;
+            opt.textContent = `${a.name || a.activity || 'Sans nom'} (${a.theme || 'Sans thème'})`;
             activitySelect.appendChild(opt);
-        } else {
-            list.forEach(a=>{
-                const opt = document.createElement('option');
-                opt.value = a.id;
-                opt.textContent = `${a.name || a.activity || 'Sans nom'} (${a.theme || 'Sans thème'})`;
-                activitySelect.appendChild(opt);
-            });
+        });
+    }
+
+    // Supprimer les anciens détails si présents
+    const oldDetails = popup.querySelector('.details');
+    if (oldDetails) oldDetails.remove();
+
+    const selectedActivityId = (JSON.parse(localStorage.getItem('planningDays')) || {})[dateStr]?.activityId;
+    if (selectedActivityId) {
+        const activity = getActivityById(selectedActivityId);
+        if (activity) {
+            const details = document.createElement('div');
+            details.className = 'details';
+            details.style.textAlign = 'left';
+            details.style.marginTop = '10px';
+
+            // Contenu texte
+            details.innerHTML = `
+                <p><strong>Nom :</strong> ${activity.name}</p>
+                <p><strong>Thème :</strong> ${activity.theme}</p>
+                <p><strong>Durée :</strong> ${activity.duration || 'N/A'} min</p>
+                <p><strong>Âge :</strong> ${activity.ageRange || 'N/A'}</p>
+                <p><strong>Matériel :</strong> ${activity.materials || 'N/A'}</p>
+            `;
+
+            // Image (avec eventListener pour éviter les erreurs de quotes)
+            if (activity.image) {
+                const img = document.createElement('img');
+                img.src = activity.image;
+                img.style.maxWidth = '150px';
+                img.style.cursor = 'pointer';
+                img.style.borderRadius = '6px';
+                img.addEventListener('click', () => window.open(activity.image, '_blank'));
+                details.appendChild(img);
+            }
+
+            popup.querySelector('.popup-content').appendChild(details);
+            if (delBtn) delBtn.style.display = 'block';
+            activitySelect.value = activity.id;
+        } else if (delBtn) {
+            delBtn.style.display = 'none';
         }
+    } else if (delBtn) {
+        delBtn.style.display = 'none';
+    }
+}
 
         const selectedActivityId = (JSON.parse(localStorage.getItem('planningDays'))||{})[dateStr]?.activityId;
         if(selectedActivityId){
@@ -205,3 +252,4 @@ document.addEventListener('DOMContentLoaded', function () {
     // afficher le mois courant dès le départ
     calendar.drawDays();
 });
+
