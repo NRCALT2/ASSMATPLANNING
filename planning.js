@@ -47,14 +47,61 @@ document.addEventListener('DOMContentLoaded', function () {
         if(headDay) headDay.innerHTML=selectedDayString||"";
         if(headMonth) headMonth.innerHTML=monthTag[month]+" - "+year;
     };
-    Calendar.prototype.drawDays=function(){
-        const startDay=(new Date(year,month,1).getDay() + 6) % 7;
-        const nDays=new Date(year,month+1,0).getDate();
-        tds.forEach(td=>{
-            td.innerHTML=''; td.id=''; td.className='';
-            td.style.backgroundColor=''; td.style.color='';
-            td.style.borderRadius=''; td.title=''; delete td.dataset.day;
-        });
+   Calendar.prototype.drawDays = function() {
+    const firstDay = new Date(year, month, 1);
+    const startDay = (firstDay.getDay() + 6) % 7; // lundi = 0
+    const nDays = new Date(year, month + 1, 0).getDate(); // nb de jours du mois
+
+    // vider tous les td
+    tds.forEach(td => {
+        td.textContent = '';
+        td.dataset.day = '';
+        td.style.backgroundColor = '';
+        td.style.color = '';
+        td.style.borderRadius = '';
+        td.title = '';
+    });
+
+    // remplir les jours
+    for (let i = 1; i <= nDays; i++) {
+        const tdIndex = startDay + i - 1;
+        if (!tds[tdIndex]) continue; // sécurité
+        const td = tds[tdIndex];
+        td.textContent = i;
+        td.dataset.day = i;
+    }
+
+    this.drawHeader();
+    markDays();
+};
+
+function markDays() {
+    const planningDays = JSON.parse(localStorage.getItem('planningDays')) || {};
+    const activities = normalizeActivities();
+
+    tds.forEach(td => {
+        const day = td.dataset.day;
+        if (!day) return;
+
+        const dateStr = `${year}-${pad2(month + 1)}-${pad2(day)}`;
+        td.style.backgroundColor = '';
+        td.style.color = '';
+        td.style.borderRadius = '';
+        td.title = '';
+        td.textContent = day; // toujours afficher le numéro
+
+        if (planningDays[dateStr]) {
+            const act = activities.find(a => Number(a.id) === Number(planningDays[dateStr].activityId));
+            if (act) {
+                td.style.backgroundColor = act.color || '#666';
+                td.style.color = getContrastColor(act.color || '#666');
+                td.style.borderRadius = '6px';
+                td.title = `${act.name || act.activity || 'Sans nom'} (${act.theme || 'Sans thème'})`;
+            }
+        }
+    });
+}
+
         let n=startDay;
         for(let i=1;i<=nDays;i++){
             const td=tds[n];
@@ -63,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
             n++;
         }
         this.drawHeader();
-        markDays();
+        s();
     };
     Calendar.prototype.prevMonth=function(){if(month<=0){month=11;year-=1;}else{month-=1;}this.drawDays();};
     Calendar.prototype.nextMonth=function(){if(month>=11){month=0;year+=1;}else{month+=1;}this.drawDays();};
@@ -179,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function markDays(){
+    function s(){
         const planningDays=JSON.parse(localStorage.getItem('planningDays'))||{};
         const activities=normalizeActivities();
         tds.forEach(td=>{
@@ -199,9 +246,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    markDays();
+    s();
     window._markDays=markDays;
 });
+
 
 
 
