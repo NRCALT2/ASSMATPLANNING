@@ -89,12 +89,16 @@ document.addEventListener('DOMContentLoaded', function () {
     selectedDate=dateStr;
     const popup=document.getElementById('popup');
     if(popup) popup.classList.remove('hidden');
+
     const activitySelect=document.getElementById('activitySelect');
     const delBtn=document.getElementById('deleteBtn');
+    const detailsDiv = document.getElementById('activityDetails');
+
     if(!activitySelect) return;
 
     const list=normalizeActivities();
     activitySelect.innerHTML='';
+
     if(list.length===0){
       const opt=document.createElement('option');
       opt.value='';opt.textContent='Aucune activité';opt.disabled=true;
@@ -107,6 +111,37 @@ document.addEventListener('DOMContentLoaded', function () {
         activitySelect.appendChild(opt);
       });
     }
+
+    const planningDays=JSON.parse(localStorage.getItem('planningDays'))||{};
+    if(planningDays[dateStr] && planningDays[dateStr].activityId){
+      activitySelect.value=planningDays[dateStr].activityId;
+      if(delBtn) delBtn.style.display="block";
+
+      // Afficher les détails
+      const act = getActivityById(planningDays[dateStr].activityId);
+      if(act){
+        detailsDiv.style.display="block";
+        document.getElementById('detailName').textContent = act.name || act.activity;
+        document.getElementById('detailTheme').textContent = act.theme;
+        document.getElementById('detailDuration').textContent = act.duration ? act.duration+' min' : '-';
+        document.getElementById('detailAge').textContent = act.ageRange || '-';
+        document.getElementById('detailMaterials').textContent = act.materials || '-';
+        const imgEl = document.getElementById('detailPhoto');
+        if(act.photo){
+          imgEl.src = act.photo;
+          imgEl.onclick = ()=>{ window.open(act.photo,'_blank'); };
+        } else {
+          imgEl.src='';
+          imgEl.onclick = null;
+        }
+      }
+
+    }else{
+      if(delBtn) delBtn.style.display="none";
+      detailsDiv.style.display="none";
+    }
+}
+
     const planningDays=JSON.parse(localStorage.getItem('planningDays'))||{};
     if(planningDays[dateStr] && planningDays[dateStr].activityId){
       activitySelect.value=planningDays[dateStr].activityId;
@@ -177,3 +212,4 @@ document.addEventListener('DOMContentLoaded', function () {
   markDays();
   window._markDays=markDays;
 });
+
