@@ -14,7 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
         popup.classList.add("hidden");
     });
 
+    // -----------------------------
     // 1️⃣ Afficher les numéros de jours
+    // -----------------------------
     const today = new Date();
     const year = today.getFullYear();
     const month = today.getMonth(); // 0 = janvier
@@ -22,59 +24,73 @@ document.addEventListener("DOMContentLoaded", () => {
     const firstDay = new Date(year, month, 1).getDay(); // 0 = dimanche
 
     calendarCells.forEach((cell, index) => {
-        let dayNum = index - (firstDay === 0 ? 6 : firstDay - 1) + 1; // ajustement pour lundi=0
-        if (dayNum > 0 && dayNum <= daysInMonth) {
-            cell.textContent = dayNum;
-            cell.dataset.day = dayNum; // stocke le numéro du jour
+        let dayNum = index - (firstDay === 0 ? 6 : firstDay - 1) + 1; // lundi=0
+        if(dayNum > 0 && dayNum <= daysInMonth){
+            const span = document.createElement("span");
+            span.textContent = dayNum;
+            span.classList.add("day-number");
+            cell.innerHTML = "";      // vide la cellule avant d'ajouter
+            cell.appendChild(span);
+            cell.dataset.day = dayNum;
         } else {
             cell.textContent = "";
         }
     });
 
-    // 2️⃣ Récupérer les activités depuis localStorage
+    // -----------------------------
+    // 2️⃣ Placer les activités selon la période du thème
+    // -----------------------------
+    const themes = JSON.parse(localStorage.getItem("themes")) || [];
     const activities = JSON.parse(localStorage.getItem("activities")) || [];
 
-    // 3️⃣ Placer les activités dans les cellules du calendrier
-    activities.forEach(activity => {
-        // Vérifier que l'activité a une propriété "day"
-        // Sinon placer dans la première cellule disponible
-        let dayCell;
-        if(activity.day) {
-            dayCell = Array.from(calendarCells).find(td => td.dataset.day == activity.day);
-        } 
-        if(!dayCell) {
-            dayCell = Array.from(calendarCells).find(td => td.textContent !== "");
+    themes.forEach(theme => {
+        const themeActivities = activities.filter(a => a.theme === theme.name);
+
+        if(!theme.startDate || !theme.endDate) return;
+
+        const start = new Date(theme.startDate);
+        const end = new Date(theme.endDate);
+
+        for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)){
+            if(d.getMonth() !== month) continue; // ignore autres mois
+            const dayNum = d.getDate();
+            const cell = Array.from(calendarCells).find(td => td.dataset.day == dayNum);
+            if(!cell) continue;
+
+            themeActivities.forEach(activity => {
+                // Vérifier doublons
+                const exists = Array.from(cell.querySelectorAll(".item"))
+                                    .some(div => div.dataset.nom === activity.name);
+                if(exists) return;
+
+                const div = document.createElement("div");
+                div.textContent = activity.name;
+                div.classList.add("item");
+                div.style.cursor = "pointer";
+
+                // data-* pour popup
+                div.dataset.nom = activity.name;
+                div.dataset.theme = activity.theme;
+                div.dataset.duration = activity.duration;
+                div.dataset.age = activity.ageRange;
+                div.dataset.materials = activity.materials;
+                div.dataset.image = activity.photo;
+
+                cell.appendChild(div);
+
+                // clic pour popup
+                div.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    detailPhoto.src = div.dataset.image || "";
+                    detailName.textContent = div.dataset.nom || "";
+                    detailTheme.textContent = div.dataset.theme || "";
+                    detailDuration.textContent = div.dataset.duration || "";
+                    detailAge.textContent = div.dataset.age || "";
+                    detailMaterials.textContent = div.dataset.materials || "";
+
+                    popup.classList.remove("hidden");
+                });
+            });
         }
-        if(!dayCell) return;
-
-        // Créer l'élément activité
-        const div = document.createElement("div");
-        div.textContent = activity.name;
-        div.classList.add("item");
-        div.style.cursor = "pointer";
-
-        // Ajouter les data-* pour le popup
-        div.dataset.nom = activity.name;
-        div.dataset.theme = activity.theme;
-        div.dataset.duration = activity.duration;
-        div.dataset.age = activity.ageRange;
-        div.dataset.materials = activity.materials;
-        div.dataset.image = activity.photo;
-
-        // Ajouter à la cellule
-        dayCell.appendChild(div);
-
-        // Clic sur l'activité ouvre le popup
-        div.addEventListener("click", (e) => {
-            e.stopPropagation(); // empêche propagation au td
-            detailPhoto.src = div.dataset.image || "";
-            detailName.textContent = div.dataset.nom || "";
-            detailTheme.textContent = div.dataset.theme || "";
-            detailDuration.textContent = div.dataset.duration || "";
-            detailAge.textContent = div.dataset.age || "";
-            detailMaterials.textContent = div.dataset.materials || "";
-
-            popup.classList.remove("hidden");
-        });
     });
 });
