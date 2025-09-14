@@ -1,0 +1,282 @@
+/**
+ * Eric Meyer's Reset CSS v2.0+ (https://meyerweb.com/eric/tools/css/reset/)
+ * http://cssreset.com
+ */
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  vertical-align: baseline;
+}
+body {
+    font-size: 100%;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+body {
+  line-height: 1.5;
+}
+ol, ul {
+  list-style: none;
+}
+blockquote, q {
+  quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: '';
+  content: none;
+}
+table {
+  border-spacing: 2px;
+}
+.clearfix:before,
+.clearfix:after {
+    content: " "; /* 1 */
+    display: table; /* 2 */
+}
+
+.clearfix:after {
+    clear: both;
+}
+/**
+ * For IE 6/7 only
+ * Include this rule to trigger hasLayout and contain floats.
+ */
+.clearfix {
+    zoom: 1;
+}
+a, a:hover {
+    text-decoration: none;
+}
+.img-responsive {
+    max-width: 100%;
+    height: auto;
+}
+
+body{
+    font-family: Arial, Helvetica, sans-serif;
+     -webkit-user-select: none;
+     -moz-user-select: none;
+     -ms-user-select: none;
+     user-select: none;
+}
+
+.elegant-calencar {
+    width: 25em;
+    height: 31em;
+    border: 1px solid #c9c9c9;
+    -webkit-box-shadow: 0 0 5px #c9c9c9;
+    box-shadow: 5 5 10px #c9c9c9;
+    text-align: center;
+    margin: 4em auto;
+    position: relative;
+}
+
+#header {
+    font-family: 'HelveticaNeue-UltraLight', 'Helvetica Neue UltraLight', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    height: 14em;
+    background-color: #fdc3ff;
+    margin-bottom: 1em;
+}
+
+.pre-button, .next-button {
+    margin-top: 2em;
+    font-size: 3em;
+    -webkit-transition: -webkit-transform 0.5s;
+    transition: transform 0.5s;
+    cursor: pointer;
+    width: 1em;
+    height: 1em;
+    line-height: 1em;
+    color: #9467ac;
+    border-radius: 50%;
+}
+
+.pre-button:hover, .next-button:hover {
+    -webkit-transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    transform: rotate(360deg);
+}
+
+.pre-button:active,.next-button:active{
+    -webkit-transform: scale(0.7);
+    -ms-transform: scale(0.7);
+    transform: scale(0.7);
+}
+
+.pre-button {
+    float: left;
+    margin-left: 0.5em;
+}
+
+.next-button {
+    float: right;
+    margin-right: 0.5em;
+}
+
+.head-info {
+    float: left;
+    width: 16em;
+}
+
+.head-day {
+    margin-top: 30px;
+    font-size: 8em;
+    line-height: 1;
+    color: #000000;
+}
+
+.head-month {
+    margin-top: 20px;
+    font-size: 2em;
+    line-height: 1;
+    color: #1c121d;
+}
+
+#calendar {
+    width: 90%;
+    margin: 0 auto;
+}
+
+#calendar tr {
+    height: 2em;
+    line-height: 2em;
+}
+
+thead tr {
+    color: #ffacfb;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+tbody tr {
+    color: #000000;
+}
+
+tbody td{
+    width: 14%;
+    border-radius: 50%;
+    cursor: pointer;
+    -webkit-transition:all 0.2s ease-in;
+    transition:all 0.2s ease-in;
+}
+
+tbody td:hover, .selected {
+    color: #fff;
+    background-color: #5e1da8;
+    border: none;
+}
+
+tbody td:active {
+    -webkit-transform: scale(0.7);
+    -ms-transform: scale(0.7);
+    transform: scale(0.7);
+}
+
+#today {
+    background-color: #efb9ff;
+    color: #000000;
+    font-family: serif;
+    border: 1px solid #cb67e9;
+    border-radius: 50%;
+}
+
+#disabled {
+    cursor: default;
+    background: #fff;
+}
+
+#disabled:hover {
+    background: #fff;
+    color: #c9c9c9;
+}
+
+#reset {
+    display: block;
+    position: absolute;
+    right: 0.5em;
+    top: 0.5em;
+    z-index: 999;
+    color: #fff;
+    font-family: serif;
+    cursor: pointer;
+    padding: 0 0.5em;
+    height: 1.5em;
+    border: 0.1em solid #fff;
+    border-radius: 4px;
+    -webkit-transition: all 0.3s ease;
+    transition: all 0.3s ease;
+}
+
+#reset:hover {
+    color: #944f90;
+    border-color: #000000;
+}
+
+#reset:active{
+    -webkit-transform: scale(0.8);
+    -ms-transform: scale(0.8);
+    transform: scale(0.8);     
+}
+
+
+.popup {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 2000;
+}
+.popup.hidden { display: none; }
+
+.popup-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+}
+.close-btn {
+  position: absolute;
+  top: 10px; right: 20px;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+.retourBtn{
+    text-align: center;
+    font-size: 1em;
+    margin: 10px;
+    background-color: #dc60e7cb;
+    border: 1px solid #310446;
+    border-radius: 5px;
+}
+
+.header{
+    width: 100%;
+    height: 10vh;
+    background: linear-gradient(135deg, #ff9ffa,#b27fec) ;
+    box-shadow: 2px 2px 4px rgb(167, 167, 167);
+}
+
+.title-header{
+    text-align: center;
+}

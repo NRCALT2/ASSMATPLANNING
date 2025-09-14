@@ -1,0 +1,122 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  background: #fdfdfd;
+  color: #333;
+}
+
+header {
+  background: #ffb347;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: white;
+  text-align: center;
+}
+header .back {
+  text-decoration: none;
+  color: white;
+  font-size: 1.2em;
+}
+
+h1, h2 {
+  margin: 10px 0;
+  text-align: center;
+}
+
+.form-section {
+  background: white;
+  margin: 20px;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+form label {
+  display: block;
+  margin: 12px 0;
+  text-align: left;
+}
+input, select, textarea {
+  width: 100%; padding: 8px; margin-top: 5px;
+  border: 1px solid #ddd; border-radius: 6px;
+  box-sizing: border-box; /* S'assure que le padding n'augmente pas la taille */
+}
+
+button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  display: block;
+  width: 100%;
+}
+button.submit {
+  background: #ff9800;
+  color: white;
+  font-size: 1.1em;
+}
+button.submit:hover {
+  background: #ff9e0c;
+}
+
+.preset-activities {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.preset-activities button {
+  flex: 1 1 45%;
+  padding: 8px;
+  border: none;
+  background: #eee;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.preset-activities button:hover {
+  background: #ddd;
+}
+
+.ideas-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  padding: 15px;
+}
+
+.idea-card {
+  padding: 15px;
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  position: relative;
+  animation: fadeIn 0.3s ease-in-out;
+  text-align: center;
+}
+.delete-btn {
+  position: absolute;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2em;
+  margin-left: 40%;
+}
+
+.hidden {
+  display: none;
+}
+
+.share{
+  background: #ff9d2d;
+  color: rgb(0, 0, 0);
+  font-size: 1.1em;
+}
+
+.tuto{
+  text-align: center;
+  color: black;
+
+}

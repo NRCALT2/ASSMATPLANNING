@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="asmat.png" type="image/x-icon">
+  <title>Idées - SUPERmam</title>
+  <link rel="stylesheet" href="ideas.css">
+</head>
+<body>
+  <header>
+    <a href="index.html" class="back">⬅ Retour</a>
+    <h1>Idées d'activités</h1>
+  </header>
+
+  <main>
+    <section class="form-section theme-creation">
+      <h2>Gérer les thèmes</h2>
+      <button id="showThemeFormBtn">➕ Nouveau thème</button>
+      <div id="themeFormContainer" class="hidden">
+        <form id="themeForm">
+          <label>Nom du thème
+            <input type="text" name="themeName" placeholder="Ex: Noël, Pâques..." required>
+          </label>
+          <label>Date de début
+            <input type="date" name="startDate">
+          </label>
+          <label>Date de fin
+            <input type="date" name="endDate">
+          </label>
+          <button type="submit" class="submit">Sauvegarder le thème</button>
+        </form>
+      </div>
+      <label>Sélectionner un thème
+        <select id="themeSelect"></select>
+      </label>
+    </section>
+
+    <section class="form-section">
+      <h2>Nouvelle activité :</h2>
+
+      <form id="activityForm">
+        <label>Activité :
+          <input type="text" name="activityName" placeholder="Pâte à sel..." required>
+        </label>
+        <label>Durée (min) :
+          <input type="number" name="duration" placeholder="15">
+        </label>
+        <label>Tranche d’âge :
+          <select name="ageRange">
+            <option value="">-- Choisir --</option>
+            <option>0-1 an</option>
+            <option>1-3 ans</option>
+            <option>3-6 ans</option>
+            <option>6+ ans</option>
+          </select>
+        </label>
+        <label>Matériel :
+          <textarea name="materials" placeholder="Peinture, pâte à modeler..."></textarea>
+        </label>
+        <label>Couleur :
+          <input type="color" name="color" value="#4caf50">
+        </label>
+        <button type="submit" class="submit">Sauvegarder l'activité</button> 
+      </form>
+    </section>
+
+    <h2>Mes idées</h2>
+    <section id="ideasList" class="ideas-list"></section>
+  </main>
+
+  <script src="idee.js"></script>
+</body>
+</html>

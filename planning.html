@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="planning.css">
+    <link rel="shortcut icon" href="asmat.png" type="image/x-icon">
+    <title>Document</title>
+</head>
+<body>
+    <div class="header">
+
+        <h1 class="title-header">Planning</h1>
+        <a href="index.html"><button class="retourBtn">⬅ Retour</button></a>
+    </div>
+    
+    <div class="elegant-calencar">
+        <div id="header" class="clearfix">
+           <div class="pre-button"><</div>
+            <div class="head-info">
+                <div class="head-day"></div>
+                <div class="head-month"></div>
+            </div>
+            <div class="next-button">></div>
+        </div>
+        <table id="calendar">
+            <thead>
+                <tr>
+                    <th>Lun</th>
+                    <th>Mar</th>
+                    <th>Mer</th>
+                    <th>Jeu</th>
+                    <th>Ven</th>
+                    <th>Sam</th>
+                    <th>Dim</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+<div id="popup" class="popup hidden">
+  <div class="popup-content">
+    <span class="close-btn" onclick="closePopup()">&times;</span>
+    <h2>Sélectionner une activité</h2>
+    <select id="activitySelect"></select>
+    <button id="saveBtn">Enregistrer</button>
+    <button id="deleteBtn" style="display:none;background:#e53935;color:white;border: 1px solid black; border-radius: 3px; cursor: pointer;">Supprimer</button>
+  </div>
+</div>
+
+
+</body>
+<script src="planning.js"></script>
+</html>
