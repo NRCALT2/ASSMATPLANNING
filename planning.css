@@ -160,9 +160,9 @@ body{
 }
 
 thead tr {
-    color: #ffacfb;
-  font-weight: 700;
-  text-transform: uppercase;
+    color: #000; /* noir pour bien voir */
+    font-weight: 700;
+    text-transform: uppercase;
 }
 
 tbody tr {
@@ -279,4 +279,5 @@ tbody td:active {
 
 .title-header{
     text-align: center;
+
 }
