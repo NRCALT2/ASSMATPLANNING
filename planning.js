@@ -189,27 +189,33 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function markDays(){
-    const planningDays=JSON.parse(localStorage.getItem('planningDays'))||{};
-    const activities=normalizeActivities();
-    tds.forEach(td=>{
-      const day=td.dataset.day;if(!day) return;
-      td.style.backgroundColor='';td.style.color='';td.title='';
-      const dateStr=`${year}-${pad2(month+1)}-${pad2(day)}`;
-      if(planningDays[dateStr]){
-        const act=activities.find(a=>Number(a.id)===Number(planningDays[dateStr].activityId));
-        if(act){
-          td.style.backgroundColor=act.color||'#666';
-          td.style.color=getContrastColor(act.color||'#666');
-          td.style.borderRadius='6px';
-          td.textContent=day;
-          td.title=`${act.name||act.activity||'Sans nom'} (${act.theme||'Sans thème'})`;
+    const planningDays = JSON.parse(localStorage.getItem('planningDays')) || {};
+    const activities = normalizeActivities();
+    tds.forEach(td => {
+        const day = td.dataset.day;
+        if(!day) return;
+
+        const dateStr = `${year}-${pad2(month+1)}-${pad2(day)}`;
+        td.style.backgroundColor = '';
+        td.style.color = '';
+        td.style.borderRadius = '';
+        td.title = '';
+        td.textContent = day; // Toujours mettre le numéro du jour
+
+        if(planningDays[dateStr]){
+            const act = activities.find(a => Number(a.id) === Number(planningDays[dateStr].activityId));
+            if(act){
+                td.style.backgroundColor = act.color || '#666';
+                td.style.color = getContrastColor(act.color || '#666');
+                td.style.borderRadius = '6px';
+                td.title = `${act.name||act.activity||'Sans nom'} (${act.theme||'Sans thème'})`;
+            }
         }
-      }else{
-        td.textContent=day;
-      }
     });
-  }
+}
+
   markDays();
   window._markDays=markDays;
 });
+
 
