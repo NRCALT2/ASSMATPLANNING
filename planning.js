@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if(headMonth) headMonth.innerHTML=monthTag[month]+" - "+year;
   };
   Calendar.prototype.drawDays=function(){
-    const startDay=new Date(year,month,1).getDay();
+    const startDay=(new Date(year,month,1).getDay() + 6) % 7;
     const nDays=new Date(year,month+1,0).getDate();
     tds.forEach(td=>{
       td.innerHTML='';td.id='';td.className='';
