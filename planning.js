@@ -36,23 +36,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // -----------------------------
-    // 2️⃣ Placer activités (exemple)
+    // 2️⃣ Placer activités
     // -----------------------------
     const activities = JSON.parse(localStorage.getItem("activities")) || [];
 
     activities.forEach(act => {
-        // Ici on suppose act.date = "YYYY-MM-DD"
+        // date de l'activité = act.date (format "YYYY-MM-DD")
+        if(!act.date) return;
+
         const actDate = new Date(act.date);
         if(actDate.getMonth() !== month) return;
         const dayNum = actDate.getDate();
+
         const cell = Array.from(calendarCells).find(td => td.dataset.day == dayNum);
         if(!cell) return;
 
         const div = document.createElement("div");
-        div.textContent = act.name;
         div.classList.add("item");
+        div.textContent = act.name;
         div.style.cursor = "pointer";
-
         div.dataset.nom = act.name;
         div.dataset.theme = act.theme;
         div.dataset.duration = act.duration;
