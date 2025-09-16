@@ -1,168 +1,194 @@
-// --- Génération du calendrier ---
-function Calendar() {
-    this.date = new Date();
-    this.renderCalendar();
+document.addEventListener("DOMContentLoaded", () => {
+  const calendar = new Calendar("calendar");
+  calendar.render();
+});
+
+/* ---------------------- CALENDRIER ---------------------- */
+function Calendar(id) {
+  this.today = new Date();
+  this.currentMonth = this.today.getMonth();
+  this.currentYear = this.today.getFullYear();
+  this.table = document.getElementById(id).getElementsByTagName("tbody")[0];
+  this.headMonth = document.querySelector(".head-month");
+
+  this.render = () => {
+    this.showMonth(this.currentYear, this.currentMonth);
     this.attachHeaderEvents();
-}
+  };
 
-Calendar.prototype.renderCalendar = function() {
-    const month = this.date.getMonth();
-    const year = this.date.getFullYear();
+  this.showMonth = (year, month) => {
+    const firstDay = new Date(year, month, 1).getDay() || 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    this.table.innerHTML = "";
 
-    const firstDay = new Date(year, month, 1).getDay();
-    const lastDate = new Date(year, month + 1, 0).getDate();
-
-    const headMonth = document.querySelector('.head-month');
-    headMonth.textContent = this.date.toLocaleString("fr-FR", { month: "long", year: "numeric" });
-
-    const cells = document.querySelectorAll("#calendar td");
-    cells.forEach(cell => {
-        cell.innerHTML = "";
-        cell.dataset.date = "";
-    });
-
-    let day = 1;
-    let startIndex = (firstDay === 0 ? 6 : firstDay - 1); // ajustement pour que lundi = 0
-    for (let i = startIndex; i < startIndex + lastDate; i++) {
-        const cell = cells[i];
-        cell.innerHTML = `<span class="day-number">${day}</span>`;
-        cell.dataset.date = `${year}-${month + 1}-${day}`;
-        cell.onclick = () => openPopup(cell.dataset.date);
-        day++;
+    let date = 1;
+    for (let i = 0; i < 6; i++) {
+      let row = document.createElement("tr");
+      for (let j = 1; j <= 7; j++) {
+        let cell = document.createElement("td");
+        if (i === 0 && j < firstDay) {
+          cell.innerHTML = "";
+        } else if (date > daysInMonth) {
+          cell.innerHTML = "";
+        } else {
+          cell.innerHTML = date;
+          cell.classList.add("day");
+          cell.addEventListener("click", () =>
+            openPopup(new Date(year, month, date))
+          );
+          date++;
+        }
+        row.appendChild(cell);
+      }
+      this.table.appendChild(row);
     }
-};
+    this.headMonth.innerHTML = `${year} - ${month + 1}`;
+  };
 
-Calendar.prototype.attachHeaderEvents = function() {
+  this.attachHeaderEvents = () => {
     document.querySelector(".pre-button").onclick = () => {
-        this.date.setMonth(this.date.getMonth() - 1);
-        this.renderCalendar();
+      this.currentMonth--;
+      if (this.currentMonth < 0) {
+        this.currentMonth = 11;
+        this.currentYear--;
+      }
+      this.showMonth(this.currentYear, this.currentMonth);
     };
     document.querySelector(".next-button").onclick = () => {
-        this.date.setMonth(this.date.getMonth() + 1);
-        this.renderCalendar();
+      this.currentMonth++;
+      if (this.currentMonth > 11) {
+        this.currentMonth = 0;
+        this.currentYear++;
+      }
+      this.showMonth(this.currentYear, this.currentMonth);
     };
-    const reset = document.getElementById("reset");
-    if (reset) {
-        reset.onclick = () => {
-            this.date = new Date();
-            this.renderCalendar();
-        };
-    }
-};
+  };
+}
 
-// --- Données thèmes -> activités ---
-const activitiesByTheme = {
-    noel: ["Décorer le sapin", "Chants de Noël", "Atelier biscuits"],
-    vacances: ["Sortie au parc", "Piscine", "Pique-nique"],
-    halloween: ["Atelier citrouille", "Déguisements", "Chasse aux bonbons"]
-};
-
-// --- Données sauvegardées (date → infos) ---
-let savedData = JSON.parse(localStorage.getItem("planningData")) || {};
-
-// --- Gestion du popup ---
+/* ---------------------- POPUP ---------------------- */
 const popup = document.getElementById("popup");
-const themeSelect = document.getElementById("themeSelect");
+const themeSelect = document.createElement("select");
+themeSelect.id = "themeSelect";
+
 const activitySelect = document.getElementById("activitySelect");
 const saveBtn = document.getElementById("saveBtn");
 const deleteBtn = document.getElementById("deleteBtn");
-const popupDetails = document.getElementById("popupDetails");
-const popupImage = document.getElementById("popupImage");
 
-let currentDate = null;
+let selectedDate = null;
+let currentTheme = null;
 
+/* ---------------------- OUVRIR POPUP ---------------------- */
 function openPopup(date) {
-    currentDate = date;
+  selectedDate = date;
 
-    // Réinitialiser les champs
-    themeSelect.value = "";
-    activitySelect.innerHTML = '<option value="">-- Choisir une activité --</option>';
-    activitySelect.disabled = true;
-    popupDetails.innerHTML = "";
-    popupImage.src = "";
+  // Récupération des activités et thèmes
+  const activities = normalizeActivities();
+  const themes = [...new Set(activities.map((a) => a.theme))];
 
-    if (savedData[date]) {
-        const data = savedData[date];
-        themeSelect.value = data.theme;
-        fillActivities(data.theme);
-        activitySelect.value = data.activity;
+  // Nettoyage
+  themeSelect.innerHTML = "";
+  activitySelect.innerHTML = "";
+  activitySelect.disabled = true;
 
-        popupDetails.innerHTML = `
-            <p><strong>Âge :</strong> ${data.age || "—"}</p>
-            <p><strong>Matériel :</strong> ${data.material || "—"}</p>
-        `;
-        if (data.image) popupImage.src = data.image;
+  // Ajout options thèmes
+  if (themes.length === 0) {
+    let opt = document.createElement("option");
+    opt.textContent = "Aucun thème";
+    themeSelect.appendChild(opt);
+  } else {
+    let opt = document.createElement("option");
+    opt.textContent = "Sélectionner un thème";
+    opt.disabled = true;
+    opt.selected = true;
+    themeSelect.appendChild(opt);
 
-        deleteBtn.style.display = "inline-block";
+    themes.forEach((t) => {
+      let option = document.createElement("option");
+      option.value = t;
+      option.textContent = t;
+      themeSelect.appendChild(option);
+    });
+  }
+
+  // Quand un thème est choisi → remplir activités
+  themeSelect.onchange = () => {
+    currentTheme = themeSelect.value;
+    activitySelect.innerHTML = "";
+    activitySelect.disabled = false;
+
+    const filtered = activities.filter((a) => a.theme === currentTheme);
+
+    if (filtered.length === 0) {
+      let opt = document.createElement("option");
+      opt.textContent = "Aucune activité";
+      activitySelect.appendChild(opt);
     } else {
-        deleteBtn.style.display = "none";
-    }
+      let opt = document.createElement("option");
+      opt.textContent = "Sélectionner une activité";
+      opt.disabled = true;
+      opt.selected = true;
+      activitySelect.appendChild(opt);
 
-    popup.classList.remove("hidden");
+      filtered.forEach((a) => {
+        let option = document.createElement("option");
+        option.value = a.id;
+        option.textContent = a.name;
+        activitySelect.appendChild(option);
+      });
+    }
+  };
+
+  // Insérer themeSelect AVANT activitySelect si pas déjà fait
+  if (!document.getElementById("themeSelect")) {
+    activitySelect.parentNode.insertBefore(themeSelect, activitySelect);
+  }
+
+  popup.classList.remove("hidden");
 }
 
+/* ---------------------- FERMER POPUP ---------------------- */
 function closePopup() {
-    popup.classList.add("hidden");
+  popup.classList.add("hidden");
+  selectedDate = null;
+  currentTheme = null;
 }
 
-// --- Remplissage activités selon le thème ---
-function fillActivities(theme) {
-    activitySelect.innerHTML = '<option value="">-- Choisir une activité --</option>';
-    if (theme && activitiesByTheme[theme]) {
-        activitiesByTheme[theme].forEach(activity => {
-            const option = document.createElement("option");
-            option.value = activity;
-            option.textContent = activity;
-            activitySelect.appendChild(option);
-        });
-        activitySelect.disabled = false;
-    } else {
-        activitySelect.disabled = true;
-    }
+/* ---------------------- NORMALISER ACTIVITÉS ---------------------- */
+function normalizeActivities() {
+  let arr = JSON.parse(localStorage.getItem("activities")) || [];
+  arr.forEach((a, idx) => {
+    if (!a.id) a.id = Date.now() + idx;
+    if (!a.name && a.activity) a.name = a.activity;
+    if (!a.theme && a.themeName) a.theme = a.themeName;
+  });
+  localStorage.setItem("activities", JSON.stringify(arr));
+  return arr;
 }
 
-themeSelect.addEventListener("change", () => {
-    fillActivities(themeSelect.value);
-});
+/* ---------------------- SAUVEGARDE ---------------------- */
+saveBtn.onclick = () => {
+  const activities = normalizeActivities();
+  const selectedId = parseInt(activitySelect.value);
+  const activity = activities.find((a) => a.id === selectedId);
 
-// --- Boutons ---
-saveBtn.addEventListener("click", () => {
-    if (!currentDate) return;
+  if (selectedDate && activity) {
+    const key = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`;
+    localStorage.setItem(
+      `planning-${key}`,
+      JSON.stringify({
+        ...activity,
+        date: key,
+      })
+    );
+  }
+  closePopup();
+};
 
-    const theme = themeSelect.value;
-    const activity = activitySelect.value;
-
-    if (!theme || !activity) {
-        alert("Merci de sélectionner un thème et une activité !");
-        return;
-    }
-
-    savedData[currentDate] = {
-        theme,
-        activity,
-        age: "5-8 ans", // Exemple fixe, tu peux brancher un input
-        material: "Ciseaux, colle", // Exemple fixe, pareil
-        image: "asmat.png" // Exemple fixe, tu peux brancher un input file
-    };
-
-    localStorage.setItem("planningData", JSON.stringify(savedData));
-    closePopup();
-});
-
-deleteBtn.addEventListener("click", () => {
-    if (currentDate && savedData[currentDate]) {
-        delete savedData[currentDate];
-        localStorage.setItem("planningData", JSON.stringify(savedData));
-    }
-    closePopup();
-});
-
-// Fermer avec clic extérieur
-popup.addEventListener("click", (e) => {
-    if (e.target === popup) closePopup();
-});
-
-// --- Lancer le calendrier ---
-window.onload = () => {
-    new Calendar();
+/* ---------------------- SUPPRESSION ---------------------- */
+deleteBtn.onclick = () => {
+  if (selectedDate) {
+    const key = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`;
+    localStorage.removeItem(`planning-${key}`);
+  }
+  closePopup();
 };
