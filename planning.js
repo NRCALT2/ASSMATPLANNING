@@ -1,194 +1,172 @@
+// planning.js
 document.addEventListener("DOMContentLoaded", () => {
-  const calendar = new Calendar("calendar");
-  calendar.render();
-});
+  const planningContainer = document.getElementById("planning");
+  if (!planningContainer) return;
 
-/* ---------------------- CALENDRIER ---------------------- */
-function Calendar(id) {
-  this.today = new Date();
-  this.currentMonth = this.today.getMonth();
-  this.currentYear = this.today.getFullYear();
-  this.table = document.getElementById(id).getElementsByTagName("tbody")[0];
-  this.headMonth = document.querySelector(".head-month");
+  // heures de 6h à 19h
+  for (let h = 6; h <= 19; h++) {
+    const hourBlock = document.createElement("div");
+    hourBlock.className = "hour";
+    hourBlock.dataset.hour = h;
+    hourBlock.innerHTML = `<strong>${h}h</strong><div class="slot"></div>`;
+    planningContainer.appendChild(hourBlock);
+    hourBlock.addEventListener("click", () => openPopupForHour(h));
+  }
 
-  this.render = () => {
-    this.showMonth(this.currentYear, this.currentMonth);
-    this.attachHeaderEvents();
-  };
+  // popup elements
+  const popup = createPopup();
+  document.body.appendChild(popup);
 
-  this.showMonth = (year, month) => {
-    const firstDay = new Date(year, month, 1).getDay() || 7;
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    this.table.innerHTML = "";
+  function createPopup() {
+    const wrapper = document.createElement("div");
+    wrapper.className = "popup hidden";
+    wrapper.id = "planningPopup";
+    wrapper.innerHTML = `
+      <div class="popup-content">
+        <span class="close-btn" id="planningClose">&times;</span>
+        <h2>Sélectionner une activité</h2>
+        <label>Thème (filtre): <select id="popupThemeFilter"><option value="">-- tous --</option></select></label>
+        <label>Activité: <select id="popupActivitySelect"></select></label>
+        <button id="popupSave">Enregistrer</button>
+        <button id="popupDelete" style="background:#e53935;color:#fff;margin-top:8px;display:none">Supprimer</button>
+      </div>
+    `;
+    // close handler
+    wrapper.querySelector("#planningClose").addEventListener("click", () => { wrapper.classList.add("hidden"); });
+    return wrapper;
+  }
 
-    let date = 1;
-    for (let i = 0; i < 6; i++) {
-      let row = document.createElement("tr");
-      for (let j = 1; j <= 7; j++) {
-        let cell = document.createElement("td");
-        if (i === 0 && j < firstDay) {
-          cell.innerHTML = "";
-        } else if (date > daysInMonth) {
-          cell.innerHTML = "";
-        } else {
-          cell.innerHTML = date;
-          cell.classList.add("day");
-          cell.addEventListener("click", () =>
-            openPopup(new Date(year, month, date))
-          );
-          date++;
-        }
-        row.appendChild(cell);
+  function normalizeActivities() {
+    let arr = JSON.parse(localStorage.getItem("activities")) || [];
+    let changed = false;
+    arr.forEach((a, idx) => {
+      if (!a.id) { a.id = Date.now() + idx; changed = true; }
+      if (!a.name && a.activity) { a.name = a.activity; changed = true; }
+      if (!a.activity && a.name) { a.activity = a.name; changed = true; }
+    });
+    if (changed) localStorage.setItem("activities", JSON.stringify(arr));
+    return arr;
+  }
+
+  function populatePopup() {
+    const activities = normalizeActivities();
+    const themes = (JSON.parse(localStorage.getItem("themes")) || []);
+    const themeFilter = document.getElementById("popupThemeFilter");
+    const activitySelect = document.getElementById("popupActivitySelect");
+
+    // fill themes dropdown
+    themeFilter.innerHTML = `<option value="">-- tous --</option>`;
+    themes.forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t.id;
+      opt.textContent = t.name;
+      themeFilter.appendChild(opt);
+    });
+
+    // fill activities dropdown
+    function fillActivities(filterThemeId) {
+      activitySelect.innerHTML = "";
+      const list = filterThemeId ? activities.filter(a => Number(a.themeId) === Number(filterThemeId)) : activities;
+      if (list.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Aucune activité";
+        opt.disabled = true;
+        activitySelect.appendChild(opt);
+      } else {
+        list.forEach(a => {
+          const opt = document.createElement("option");
+          opt.value = a.id;
+          opt.textContent = `${a.name || a.activity} (${getThemeName(a.themeId)})`;
+          activitySelect.appendChild(opt);
+        });
       }
-      this.table.appendChild(row);
     }
-    this.headMonth.innerHTML = `${year} - ${month + 1}`;
-  };
 
-  this.attachHeaderEvents = () => {
-    document.querySelector(".pre-button").onclick = () => {
-      this.currentMonth--;
-      if (this.currentMonth < 0) {
-        this.currentMonth = 11;
-        this.currentYear--;
-      }
-      this.showMonth(this.currentYear, this.currentMonth);
+    themeFilter.addEventListener("change", () => fillActivities(themeFilter.value));
+    fillActivities(); // initial
+  }
+
+  function getThemeName(themeId) {
+    const themes = JSON.parse(localStorage.getItem("themes")) || [];
+    const t = themes.find(x => Number(x.id) === Number(themeId));
+    return t ? t.name : "Sans thème";
+  }
+
+  let editingHour = null;
+
+  function openPopupForHour(hour) {
+    editingHour = hour;
+    const popupEl = document.getElementById("planningPopup");
+    popupEl.classList.remove("hidden");
+    populatePopup();
+
+    // preselect if exists
+    const planning = JSON.parse(localStorage.getItem("planning")) || {};
+    const entry = planning[hour];
+    const activitySelect = document.getElementById("popupActivitySelect");
+    const deleteBtn = document.getElementById("popupDelete");
+    if (entry && entry.activityId) {
+      activitySelect.value = entry.activityId;
+      deleteBtn.style.display = "block";
+    } else {
+      deleteBtn.style.display = "none";
+    }
+
+    // handlers
+    document.getElementById("popupSave").onclick = () => {
+      const sel = activitySelect.value;
+      if (!sel) { alert("Choisissez une activité"); return; }
+      const chosen = normalizeActivities().find(a => a.id === Number(sel));
+      if (!chosen) { alert("Activité introuvable"); return; }
+      const planning = JSON.parse(localStorage.getItem("planning")) || {};
+      planning[hour] = { activityId: chosen.id };
+      localStorage.setItem("planning", JSON.stringify(planning));
+      renderPlanning();
+      popupEl.classList.add("hidden");
     };
-    document.querySelector(".next-button").onclick = () => {
-      this.currentMonth++;
-      if (this.currentMonth > 11) {
-        this.currentMonth = 0;
-        this.currentYear++;
-      }
-      this.showMonth(this.currentYear, this.currentMonth);
+
+    document.getElementById("popupDelete").onclick = () => {
+      const planning = JSON.parse(localStorage.getItem("planning")) || {};
+      if (planning[hour]) delete planning[hour];
+      localStorage.setItem("planning", JSON.stringify(planning));
+      renderPlanning();
+      popupEl.classList.add("hidden");
     };
-  };
-}
+  }
 
-/* ---------------------- POPUP ---------------------- */
-const popup = document.getElementById("popup");
-const themeSelect = document.createElement("select");
-themeSelect.id = "themeSelect";
-
-const activitySelect = document.getElementById("activitySelect");
-const saveBtn = document.getElementById("saveBtn");
-const deleteBtn = document.getElementById("deleteBtn");
-
-let selectedDate = null;
-let currentTheme = null;
-
-/* ---------------------- OUVRIR POPUP ---------------------- */
-function openPopup(date) {
-  selectedDate = date;
-
-  // Récupération des activités et thèmes
-  const activities = normalizeActivities();
-  const themes = [...new Set(activities.map((a) => a.theme))];
-
-  // Nettoyage
-  themeSelect.innerHTML = "";
-  activitySelect.innerHTML = "";
-  activitySelect.disabled = true;
-
-  // Ajout options thèmes
-  if (themes.length === 0) {
-    let opt = document.createElement("option");
-    opt.textContent = "Aucun thème";
-    themeSelect.appendChild(opt);
-  } else {
-    let opt = document.createElement("option");
-    opt.textContent = "Sélectionner un thème";
-    opt.disabled = true;
-    opt.selected = true;
-    themeSelect.appendChild(opt);
-
-    themes.forEach((t) => {
-      let option = document.createElement("option");
-      option.value = t;
-      option.textContent = t;
-      themeSelect.appendChild(option);
+  function renderPlanning() {
+    const planning = JSON.parse(localStorage.getItem("planning")) || {};
+    const activities = normalizeActivities();
+    document.querySelectorAll(".hour").forEach(div => {
+      const h = div.dataset.hour;
+      const slot = div.querySelector(".slot");
+      slot.innerHTML = "";
+      if (planning[h]) {
+        const act = activities.find(a => Number(a.id) === Number(planning[h].activityId));
+        if (act) {
+          const el = document.createElement("div");
+          el.className = "activity";
+          el.style.background = act.color || "#4caf50";
+          el.style.color = (getContrastColor(act.color || "#4caf50"));
+          el.textContent = `${act.name || act.activity} ${act.duration ? `(${act.duration}m)` : ""}`;
+          slot.appendChild(el);
+        }
+      }
     });
   }
 
-  // Quand un thème est choisi → remplir activités
-  themeSelect.onchange = () => {
-    currentTheme = themeSelect.value;
-    activitySelect.innerHTML = "";
-    activitySelect.disabled = false;
-
-    const filtered = activities.filter((a) => a.theme === currentTheme);
-
-    if (filtered.length === 0) {
-      let opt = document.createElement("option");
-      opt.textContent = "Aucune activité";
-      activitySelect.appendChild(opt);
-    } else {
-      let opt = document.createElement("option");
-      opt.textContent = "Sélectionner une activité";
-      opt.disabled = true;
-      opt.selected = true;
-      activitySelect.appendChild(opt);
-
-      filtered.forEach((a) => {
-        let option = document.createElement("option");
-        option.value = a.id;
-        option.textContent = a.name;
-        activitySelect.appendChild(option);
-      });
-    }
-  };
-
-  // Insérer themeSelect AVANT activitySelect si pas déjà fait
-  if (!document.getElementById("themeSelect")) {
-    activitySelect.parentNode.insertBefore(themeSelect, activitySelect);
+  function getContrastColor(hex) {
+    if (!hex) return "#fff";
+    hex = hex.replace("#", "");
+    if (hex.length === 3) hex = hex.split("").map(c => c + c).join("");
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.6 ? "#000" : "#fff";
   }
 
-  popup.classList.remove("hidden");
-}
-
-/* ---------------------- FERMER POPUP ---------------------- */
-function closePopup() {
-  popup.classList.add("hidden");
-  selectedDate = null;
-  currentTheme = null;
-}
-
-/* ---------------------- NORMALISER ACTIVITÉS ---------------------- */
-function normalizeActivities() {
-  let arr = JSON.parse(localStorage.getItem("activities")) || [];
-  arr.forEach((a, idx) => {
-    if (!a.id) a.id = Date.now() + idx;
-    if (!a.name && a.activity) a.name = a.activity;
-    if (!a.theme && a.themeName) a.theme = a.themeName;
-  });
-  localStorage.setItem("activities", JSON.stringify(arr));
-  return arr;
-}
-
-/* ---------------------- SAUVEGARDE ---------------------- */
-saveBtn.onclick = () => {
-  const activities = normalizeActivities();
-  const selectedId = parseInt(activitySelect.value);
-  const activity = activities.find((a) => a.id === selectedId);
-
-  if (selectedDate && activity) {
-    const key = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`;
-    localStorage.setItem(
-      `planning-${key}`,
-      JSON.stringify({
-        ...activity,
-        date: key,
-      })
-    );
-  }
-  closePopup();
-};
-
-/* ---------------------- SUPPRESSION ---------------------- */
-deleteBtn.onclick = () => {
-  if (selectedDate) {
-    const key = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`;
-    localStorage.removeItem(`planning-${key}`);
-  }
-  closePopup();
-};
+  // initial render
+  renderPlanning();
+});
