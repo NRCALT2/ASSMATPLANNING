@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function() {
     return;
   }
 
-  const filteredActivities = activities.filter(a => a.themeId === themeId);
+  const filteredActivities = activities.filter(a => Number(a.themeId) === Number(themeId));
 
   const agendaContent = document.getElementById("agenda-content");
   if (filteredActivities.length === 0) {
@@ -34,10 +34,10 @@ document.addEventListener("DOMContentLoaded", function() {
   filteredActivities.forEach(activity => {
     const card = document.createElement("div");
     card.className = "idea-card";
-    card.style.background = activity.color;
+    card.style.background = activity.color || "#4caf50";
 
     card.innerHTML = `
-      <strong>${activity.activity}</strong>
+      <strong>${activity.name || activity.activity}</strong><br>
       <div class="badges">
         ${activity.duration ? `<span class="badge">⏱ ${activity.duration} min</span>` : ""}
         ${activity.ageRange ? `<span class="badge">👶 ${activity.ageRange}</span>` : ""}
