@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
   const themeFormContainer = document.getElementById("themeFormContainer");
   const showThemeFormBtn = document.getElementById("showThemeFormBtn");
   const themeForm = document.getElementById("themeForm");
@@ -6,205 +6,166 @@ document.addEventListener("DOMContentLoaded", function() {
   const activityForm = document.getElementById("activityForm");
   const ideasList = document.getElementById("ideasList");
 
-  showThemeFormBtn.addEventListener("click", () => {
-    themeFormContainer.classList.toggle("hidden");
-  });
+  // helpers
+  function genId() {
+    return Date.now() + Math.floor(Math.random() * 1000);
+  }
 
-  // Modal pour afficher activité
-  const modal = document.createElement("div");
-  modal.id = "activityModal";
-  modal.style.display = "none";
-  modal.style.position = "fixed";
-  modal.style.top = 0;
-  modal.style.left = 0;
-  modal.style.width = "100%";
-  modal.style.height = "100%";
-  modal.style.background = "rgba(0,0,0,0.5)";
-  modal.style.justifyContent = "center";
-  modal.style.alignItems = "center";
-  modal.style.zIndex = 1000;
-  modal.innerHTML = `
-    <div style="background:white; padding:20px; border-radius:12px; max-width:500px; width:90%; position:relative; max-height:90%; overflow:auto;">
-      <button id="modalCloseBtn" style="position:absolute; top:10px; right:10px; background:#e53935; border:none; color:white; font-size:1em; width:25px; height:25px; border-radius:50%; cursor:pointer;">×</button>
-      <div id="modalContent"></div>
-    </div>
-  `;
-  document.body.appendChild(modal);
+  function loadThemes() {
+    return JSON.parse(localStorage.getItem("themes")) || [];
+  }
+  function saveThemes(arr) {
+    localStorage.setItem("themes", JSON.stringify(arr));
+  }
 
-  const modalContent = document.getElementById("modalContent");
-  const modalCloseBtn = document.getElementById("modalCloseBtn");
-  modalCloseBtn.addEventListener("click", () => {
-    modal.style.display = "none";
-  });
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) modal.style.display = "none";
-  });
+  function loadActivities() {
+    // normalization + id assignment if missing
+    let arr = JSON.parse(localStorage.getItem("activities")) || [];
+    let changed = false;
+    arr.forEach((a, idx) => {
+      if (!a.id) { a.id = genId() + idx; changed = true; }
+      if (!a.name && a.activity) { a.name = a.activity; changed = true; }
+      if (!a.activity && a.name) { a.activity = a.name; changed = true; }
+      if (!a.theme && a.themeName) { a.theme = a.themeName; changed = true; }
+    });
+    if (changed) localStorage.setItem("activities", JSON.stringify(arr));
+    return arr;
+  }
+  function saveActivities(arr) {
+    localStorage.setItem("activities", JSON.stringify(arr));
+  }
 
-  // Sauvegarde un nouveau thème
-  themeForm.addEventListener("submit", function(e) {
-    e.preventDefault();
-    const newTheme = {
-      name: this.themeName.value,
-      startDate: this.startDate.value,
-      endDate: this.endDate.value,
-    };
-    let themes = JSON.parse(localStorage.getItem("themes")) || [];
-    themes.push(newTheme);
-    localStorage.setItem("themes", JSON.stringify(themes));
-    
-    populateThemeSelect();
-    themeForm.reset();
-    themeFormContainer.classList.add("hidden");
-  });
-
-  // Supprimer thème
-  const deleteThemeBtn = document.getElementById("deleteThemeBtn");
-  deleteThemeBtn.addEventListener("click", () => {
-    const selectedThemeName = themeSelect.value;
-    if (!selectedThemeName) {
-      alert("Veuillez sélectionner un thème à supprimer.");
-      return;
-    }
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer le thème "${selectedThemeName}" et toutes ses activités ?`)) return;
-
-    let themes = JSON.parse(localStorage.getItem("themes")) || [];
-    themes = themes.filter(t => t.name !== selectedThemeName);
-    localStorage.setItem("themes", JSON.stringify(themes));
-
-    let activities = JSON.parse(localStorage.getItem("activities")) || [];
-    activities = activities.filter(a => a.theme !== selectedThemeName);
-    localStorage.setItem("activities", JSON.stringify(activities));
-
-    populateThemeSelect();
-    renderActivities();
-  });
-
-  function readImageAsDataURL(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result);
-      reader.onerror = e => reject(e);
-      reader.readAsDataURL(file);
+  // toggle theme form
+  if (showThemeFormBtn && themeFormContainer) {
+    showThemeFormBtn.addEventListener("click", () => {
+      themeFormContainer.classList.toggle("hidden");
     });
   }
 
-  activityForm.addEventListener("submit", async function(e) {
-    e.preventDefault();
-    const selectedThemeName = themeSelect.value;
-    if (!selectedThemeName) {
-      alert("Veuillez sélectionner ou créer un thème d'abord.");
-      return;
-    }
+  // save a new theme
+  if (themeForm) {
+    themeForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const name = this.themeName.value.trim();
+      if (!name) return alert("Nom du thème requis");
+      const newTheme = {
+        id: genId(),
+        name,
+        startDate: this.startDate.value || null,
+        endDate: this.endDate.value || null,
+      };
+      let themes = loadThemes();
+      themes.push(newTheme);
+      saveThemes(themes);
+      populateThemeSelect();
+      themeForm.reset();
+      themeFormContainer.classList.add("hidden");
+    });
+  }
 
-    let photoData = null;
-    if (this.photo && this.photo.files.length > 0) {
-      photoData = await readImageAsDataURL(this.photo.files[0]);
-    }
-
-    let age = this.ageRange.value;
-    if (age === "custom") {
-      age = this.customAge.value || "Non défini";
-    }
-
-    const newActivity = {
-      theme: selectedThemeName,
-      name: this.activityName.value,
-      duration: this.duration.value,
-      ageRange: age,
-      materials: this.materials.value,
-      color: this.color.value,
-      photo: photoData
-    };
-
-    let activities = JSON.parse(localStorage.getItem("activities")) || [];
-    activities.push(newActivity);
-    localStorage.setItem("activities", JSON.stringify(activities));
-
-    renderActivities();
-    activityForm.reset();
-  });
-
-  themeSelect.addEventListener("change", renderActivities);
-
+  // populate theme select
   function populateThemeSelect() {
-    let themes = JSON.parse(localStorage.getItem("themes")) || [];
+    let themes = loadThemes();
     themeSelect.innerHTML = '<option value="">-- Choisir un thème --</option>';
-    themes.forEach(theme => {
-      let option = document.createElement("option");
-      option.value = theme.name;
-      option.textContent = theme.name;
-      themeSelect.appendChild(option);
+    themes.forEach(t => {
+      let opt = document.createElement("option");
+      opt.value = t.id;
+      opt.textContent = t.name;
+      themeSelect.appendChild(opt);
     });
-    if (themes.length > 0) themeSelect.value = themes[0].name;
+    if (themes.length > 0) themeSelect.value = themes[0].id;
   }
 
+  // save a new activity
+  if (activityForm) {
+    activityForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!themeSelect.value) {
+        alert("Veuillez sélectionner ou créer un thème d'abord.");
+        return;
+      }
+      const newActivity = {
+        id: genId(),
+        themeId: Number(this.themeId ? this.themeId.value : themeSelect.value) || Number(themeSelect.value),
+        theme: null, // we will fill with theme name when rendering
+        name: this.activityName.value.trim(),
+        activity: this.activityName.value.trim(), // for compatibility
+        duration: this.duration.value || null,
+        ageRange: this.ageRange.value || null,
+        materials: this.materials.value || null,
+        color: this.color.value || "#4caf50"
+      };
+
+      // store
+      let activities = loadActivities();
+      activities.push(newActivity);
+      saveActivities(activities);
+
+      renderActivities();
+      this.reset();
+    });
+  }
+
+  // re-generate activities list in UI
   function renderActivities() {
-    const selectedThemeName = themeSelect.value;
-    const activities = JSON.parse(localStorage.getItem("activities")) || [];
-    const filteredActivities = activities.filter(a => a.theme === selectedThemeName);
-    
+    const activities = loadActivities();
+    const themes = loadThemes();
+    const selectedThemeId = Number(themeSelect.value);
+
+    // if theme selected, filter; else show all
+    const filtered = selectedThemeId ? activities.filter(a => Number(a.themeId) === selectedThemeId) : activities;
+
     ideasList.innerHTML = "";
-    if (filteredActivities.length === 0) {
+    if (filtered.length === 0) {
       ideasList.innerHTML = "<p>Aucune activité pour ce thème. Ajoutez-en une !</p>";
       return;
     }
 
-    filteredActivities.forEach((activity, index) => {
+    filtered.forEach((act, idx) => {
       const card = document.createElement("div");
       card.className = "idea-card";
-      card.style.background = activity.color;
+      card.style.background = act.color || "#4caf50";
+      const themeObj = themes.find(t => Number(t.id) === Number(act.themeId));
+      const themeName = themeObj ? themeObj.name : "Sans thème";
+      act.theme = themeName; // keep for tooltip etc.
 
       card.innerHTML = `
-        <button class="delete-btn" data-index="${index}" style="position:absolute; top:5px; right:5px; font-size:1em; width:20px; height:20px;">×</button>
-        <strong>${activity.name}</strong><br>
-        ${activity.photo ? `<img src="${activity.photo}" alt="${activity.name}" style="max-width:150px; max-height:150px; margin-top:5px; border-radius:6px; cursor:pointer;">` : ""}
+        <button class="delete-btn" data-id="${act.id}">❌</button>
+        <strong>${act.name}</strong><br>
         <div class="badges">
-          ${activity.duration ? `<span class="badge">⏱ ${activity.duration} min</span>` : ""}
-          ${activity.ageRange ? `<span class="badge">👶 ${activity.ageRange}</span>` : ""}
+          ${act.duration ? `<span class="badge">⏱ ${act.duration} min</span>` : ""}
+          ${act.ageRange ? `<span class="badge">👶 ${act.ageRange}</span>` : ""}
         </div>
-        ${activity.materials ? `<p>🛠 ${activity.materials}</p>` : ""}
+        ${act.materials ? `<p>🛠 ${act.materials}</p>` : ""}
+        <div style="opacity:0.85;font-size:0.85em;margin-top:8px">${themeName}</div>
       `;
       ideasList.appendChild(card);
 
-      // Suppression
+      // delete handler
       card.querySelector(".delete-btn").addEventListener("click", (e) => {
-        e.stopPropagation(); // empêche le clic sur la carte
-        const originalIndex = activities.findIndex(a => a.theme === selectedThemeName && a.name === filteredActivities[index].name);
-        if (originalIndex > -1) {
-          activities.splice(originalIndex, 1);
-          localStorage.setItem("activities", JSON.stringify(activities));
-          renderActivities();
-        }
+        e.stopPropagation();
+        if (!confirm("Supprimer cette activité ?")) return;
+        let activities = loadActivities();
+        const idToRemove = Number(e.target.dataset.id);
+        activities = activities.filter(a => Number(a.id) !== idToRemove);
+        saveActivities(activities);
+        renderActivities();
       });
-
-      // Cliquer sur la carte ouvre le modal avec détails
-      card.addEventListener("click", () => {
-        modalContent.innerHTML = `
-          <h3>${activity.name}</h3>
-          ${activity.photo ? `<img src="${activity.photo}" alt="${activity.name}" style="width:100%; max-height:400px; object-fit:contain; margin-bottom:10px; border-radius:6px;">` : ""}
-          <p><strong>Durée :</strong> ${activity.duration || '-' } min</p>
-          <p><strong>Tranche d'âge :</strong> ${activity.ageRange || '-'}</p>
-          <p><strong>Matériel :</strong> ${activity.materials || '-'}</p>
-          <p><strong>Couleur :</strong> ${activity.color}</p>
-        `;
-        modal.style.display = "flex";
-      });
-
-      // Cliquer sur l'aperçu ouvre la version plus grande
-      const imgPreview = card.querySelector("img");
-      if(imgPreview) {
-        imgPreview.addEventListener("click", (e) => {
-          e.stopPropagation();
-          modalContent.innerHTML = `
-            <h3>${activity.name}</h3>
-            <img src="${activity.photo}" alt="${activity.name}" style="width:100%; max-height:400px; object-fit:contain; margin-bottom:10px; border-radius:6px;">
-          `;
-          modal.style.display = "flex";
-        });
-      }
     });
   }
 
+  // when theme select changes
+  if (themeSelect) themeSelect.addEventListener("change", renderActivities);
+
+  // preset quick fill buttons (if present)
+  document.querySelectorAll(".quick-idea").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const input = document.querySelector("#activityForm input[name='activityName']");
+      if (input) input.value = btn.textContent.trim();
+    });
+  });
+
+  // init
   populateThemeSelect();
   renderActivities();
 });
