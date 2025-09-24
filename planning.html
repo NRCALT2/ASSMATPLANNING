@@ -1,77 +1,73 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Planning</title>
-  <link rel="stylesheet" href="planning.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Planning - SUPERmam</title>
+    <link rel="stylesheet" href="css/planning.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ffb347">
 </head>
 <body>
-  <div class="header">
-      <h1 class="title-header">Planning</h1>
-      <a href="index.html"><button class="retourBtn">⬅ Retour</button></a>
-  </div>
-  
-  <div class="elegant-calencar">
-      <div id="header" class="clearfix">
-         <div class="pre-button"><</div>
-          <div class="head-info">
-              <div class="head-day"></div>
-              <div class="head-month"></div>
-          </div>
-          <div class="next-button">></div>
-      </div>
-      <table id="calendar">
-          <thead>
-              <tr>
-                  <th>Lun</th>
-                  <th>Mar</th>
-                  <th>Mer</th>
-                  <th>Jeu</th>
-                  <th>Ven</th>
-                  <th>Sam</th>
-                  <th>Dim</th>
-              </tr>
-          </thead>
-          <tbody>
-              <!-- 6 lignes pour le mois -->
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-              <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-          </tbody>
-      </table>
-  </div>
+    <header>
+        <a href="index.html" class="back">⬅ Retour</a>
+        <h1>Planning</h1>
+    </header>
 
- <div id="popup" class="popup hidden">
-  <div class="popup-content">
-    <span class="close-btn" onclick="closePopup()">&times;</span>
-    <h2>Planifier une activité</h2>
+    <main>
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <button id="prev-month" class="nav-btn">←</button>
+                <h2 id="current-month-year"></h2>
+                <button id="next-month" class="nav-btn">→</button>
+            </div>
+            <div class="calendar-grid">
+                <div class="weekdays">
+                    <span>Lun</span>
+                    <span>Mar</span>
+                    <span>Mer</span>
+                    <span>Jeu</span>
+                    <span>Ven</span>
+                    <span>Sam</span>
+                    <span>Dim</span>
+                </div>
+                <div id="calendar-body" class="days-container">
+                    </div>
+            </div>
+        </div>
+    </main>
 
-    <!-- Choix du thème -->
-    <label for="themeSelect">Thème :</label>
-    <select id="themeSelect">
-      <option value="">-- Choisir un thème --</option>
-      <option value="noel">Noël</option>
-      <option value="vacances">Vacances</option>
-      <option value="halloween">Halloween</option>
-    </select>
+    <div id="popup" class="popup hidden">
+        <div class="popup-content">
+            <span class="close-btn">&times;</span>
+            <h3 id="popup-date"></h3>
+            
+            <div id="theme-info-display" class="info-display hidden">
+                <h4>Informations du thème :</h4>
+                <p><strong id="theme-name"></strong></p>
+                <p><strong id="theme-period"></strong></p>
+                <img id="theme-image" src="" alt="Image du thème">
+            </div>
 
-    <!-- Choix de l’activité (lié au thème) -->
-    <label for="activitySelect">Activité :</label>
-    <select id="activitySelect" disabled>
-      <option value="">-- Choisir une activité --</option>
-    </select>
+            <div id="activity-info-display" class="info-display hidden">
+                <h4>Informations de l'activité :</h4>
+                <p><strong id="activity-name"></strong></p>
+                <p><strong id="activity-age-range"></strong></p>
+                <p><strong id="activity-description"></strong></p>
+                <p><strong id="activity-material"></strong></p>
+                <img id="activity-image" src="" alt="Image de l'activité">
+            </div>
 
-    <button id="saveBtn">Enregistrer</button>
-    <button id="deleteBtn" style="display:none;background:#e53935;color:white;border: 1px solid black; border-radius: 3px; cursor: pointer;">Supprimer</button>
-  </div>
-</div>
+            <label for="activity-select">Activité :</label>
+            <select id="activity-select">
+                </select>
+            <div class="popup-buttons">
+                <button id="save-activity-btn">Enregistrer</button>
+                <button id="delete-activity-btn" class="hidden">Supprimer</button>
+            </div>
+        </div>
+    </div>
 
-
-  <script src="planning.js"></script>
+    <script src="js/planning.js"></script>
 </body>
 </html>
-
