@@ -1,172 +1,216 @@
-// planning.js
-document.addEventListener("DOMContentLoaded", () => {
-  const planningContainer = document.getElementById("planning");
-  if (!planningContainer) return;
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Sélection des éléments du DOM ---
+    const currentMonthYearEl = document.getElementById('current-month-year');
+    const calendarBody = document.getElementById('calendar-body');
+    const prevMonthBtn = document.getElementById('prev-month');
+    const nextMonthBtn = document.getElementById('next-month');
+    const popup = document.getElementById('popup');
+    const closeBtn = document.querySelector('.popup-content .close-btn');
+    const popupDateEl = document.getElementById('popup-date');
+    const activitySelect = document.getElementById('activity-select');
+    const saveBtn = document.getElementById('save-activity-btn');
+    const deleteBtn = document.getElementById('delete-activity-btn');
+    const activityInfoDisplay = document.getElementById('activity-info-display');
+    const themeInfoDisplay = document.getElementById('theme-info-display');
 
-  // heures de 6h à 19h
-  for (let h = 6; h <= 19; h++) {
-    const hourBlock = document.createElement("div");
-    hourBlock.className = "hour";
-    hourBlock.dataset.hour = h;
-    hourBlock.innerHTML = `<strong>${h}h</strong><div class="slot"></div>`;
-    planningContainer.appendChild(hourBlock);
-    hourBlock.addEventListener("click", () => openPopupForHour(h));
-  }
+    // --- État de l'application ---
+    let currentDate = new Date();
+    let selectedDate = null;
+    
+    // Récupération des données depuis le stockage local
+    const themes = JSON.parse(localStorage.getItem('themes')) || [];
+    let activities = JSON.parse(localStorage.getItem('activities')) || [];
 
-  // popup elements
-  const popup = createPopup();
-  document.body.appendChild(popup);
+    // --- Fonctions de rendu et de gestion du calendrier ---
 
-  function createPopup() {
-    const wrapper = document.createElement("div");
-    wrapper.className = "popup hidden";
-    wrapper.id = "planningPopup";
-    wrapper.innerHTML = `
-      <div class="popup-content">
-        <span class="close-btn" id="planningClose">&times;</span>
-        <h2>Sélectionner une activité</h2>
-        <label>Thème (filtre): <select id="popupThemeFilter"><option value="">-- tous --</option></select></label>
-        <label>Activité: <select id="popupActivitySelect"></select></label>
-        <button id="popupSave">Enregistrer</button>
-        <button id="popupDelete" style="background:#e53935;color:#fff;margin-top:8px;display:none">Supprimer</button>
-      </div>
-    `;
-    // close handler
-    wrapper.querySelector("#planningClose").addEventListener("click", () => { wrapper.classList.add("hidden"); });
-    return wrapper;
-  }
+    /**
+     * Génère et affiche le calendrier pour le mois donné.
+     * @param {Date} date - La date pour le mois à afficher.
+     */
+    const renderCalendar = (date) => {
+        calendarBody.innerHTML = '';
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        
+        currentMonthYearEl.textContent = date.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
 
-  function normalizeActivities() {
-    let arr = JSON.parse(localStorage.getItem("activities")) || [];
-    let changed = false;
-    arr.forEach((a, idx) => {
-      if (!a.id) { a.id = Date.now() + idx; changed = true; }
-      if (!a.name && a.activity) { a.name = a.activity; changed = true; }
-      if (!a.activity && a.name) { a.activity = a.name; changed = true; }
-    });
-    if (changed) localStorage.setItem("activities", JSON.stringify(arr));
-    return arr;
-  }
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+        
+        const startingDay = (firstDayOfMonth.getDay() + 6) % 7; 
 
-  function populatePopup() {
-    const activities = normalizeActivities();
-    const themes = (JSON.parse(localStorage.getItem("themes")) || []);
-    const themeFilter = document.getElementById("popupThemeFilter");
-    const activitySelect = document.getElementById("popupActivitySelect");
-
-    // fill themes dropdown
-    themeFilter.innerHTML = `<option value="">-- tous --</option>`;
-    themes.forEach(t => {
-      const opt = document.createElement("option");
-      opt.value = t.id;
-      opt.textContent = t.name;
-      themeFilter.appendChild(opt);
-    });
-
-    // fill activities dropdown
-    function fillActivities(filterThemeId) {
-      activitySelect.innerHTML = "";
-      const list = filterThemeId ? activities.filter(a => Number(a.themeId) === Number(filterThemeId)) : activities;
-      if (list.length === 0) {
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "Aucune activité";
-        opt.disabled = true;
-        activitySelect.appendChild(opt);
-      } else {
-        list.forEach(a => {
-          const opt = document.createElement("option");
-          opt.value = a.id;
-          opt.textContent = `${a.name || a.activity} (${getThemeName(a.themeId)})`;
-          activitySelect.appendChild(opt);
-        });
-      }
-    }
-
-    themeFilter.addEventListener("change", () => fillActivities(themeFilter.value));
-    fillActivities(); // initial
-  }
-
-  function getThemeName(themeId) {
-    const themes = JSON.parse(localStorage.getItem("themes")) || [];
-    const t = themes.find(x => Number(x.id) === Number(themeId));
-    return t ? t.name : "Sans thème";
-  }
-
-  let editingHour = null;
-
-  function openPopupForHour(hour) {
-    editingHour = hour;
-    const popupEl = document.getElementById("planningPopup");
-    popupEl.classList.remove("hidden");
-    populatePopup();
-
-    // preselect if exists
-    const planning = JSON.parse(localStorage.getItem("planning")) || {};
-    const entry = planning[hour];
-    const activitySelect = document.getElementById("popupActivitySelect");
-    const deleteBtn = document.getElementById("popupDelete");
-    if (entry && entry.activityId) {
-      activitySelect.value = entry.activityId;
-      deleteBtn.style.display = "block";
-    } else {
-      deleteBtn.style.display = "none";
-    }
-
-    // handlers
-    document.getElementById("popupSave").onclick = () => {
-      const sel = activitySelect.value;
-      if (!sel) { alert("Choisissez une activité"); return; }
-      const chosen = normalizeActivities().find(a => a.id === Number(sel));
-      if (!chosen) { alert("Activité introuvable"); return; }
-      const planning = JSON.parse(localStorage.getItem("planning")) || {};
-      planning[hour] = { activityId: chosen.id };
-      localStorage.setItem("planning", JSON.stringify(planning));
-      renderPlanning();
-      popupEl.classList.add("hidden");
-    };
-
-    document.getElementById("popupDelete").onclick = () => {
-      const planning = JSON.parse(localStorage.getItem("planning")) || {};
-      if (planning[hour]) delete planning[hour];
-      localStorage.setItem("planning", JSON.stringify(planning));
-      renderPlanning();
-      popupEl.classList.add("hidden");
-    };
-  }
-
-  function renderPlanning() {
-    const planning = JSON.parse(localStorage.getItem("planning")) || {};
-    const activities = normalizeActivities();
-    document.querySelectorAll(".hour").forEach(div => {
-      const h = div.dataset.hour;
-      const slot = div.querySelector(".slot");
-      slot.innerHTML = "";
-      if (planning[h]) {
-        const act = activities.find(a => Number(a.id) === Number(planning[h].activityId));
-        if (act) {
-          const el = document.createElement("div");
-          el.className = "activity";
-          el.style.background = act.color || "#4caf50";
-          el.style.color = (getContrastColor(act.color || "#4caf50"));
-          el.textContent = `${act.name || act.activity} ${act.duration ? `(${act.duration}m)` : ""}`;
-          slot.appendChild(el);
+        // Remplir les jours vides du début du mois
+        for (let i = 0; i < startingDay; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.classList.add('day-cell', 'inactive');
+            calendarBody.appendChild(emptyCell);
         }
-      }
+
+        // Remplir les jours du mois
+        for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+            const dayCell = document.createElement('div');
+            dayCell.classList.add('day-cell');
+            dayCell.textContent = day;
+            
+            const fullDate = new Date(year, month, day);
+            const dateString = fullDate.toISOString().split('T')[0];
+            dayCell.dataset.date = dateString;
+            
+            // Marquer le jour actuel
+            if (fullDate.toDateString() === new Date().toDateString()) {
+                dayCell.classList.add('current-day');
+            }
+
+            // Appliquer la couleur de thème si le jour est dans une période de thème
+            const themeForDay = themes.find(t => {
+                if (!t.startDate || !t.endDate) return false;
+                const startDate = new Date(t.startDate);
+                const endDate = new Date(t.endDate);
+                return fullDate >= startDate && fullDate <= endDate;
+            });
+
+            if (themeForDay) {
+                dayCell.style.backgroundColor = themeForDay.color;
+            }
+
+            // Ajouter un point si une activité est prévue ce jour-là
+            const activityForDay = activities.find(act => act.date === dateString);
+            if (activityForDay) {
+                const dot = document.createElement('div');
+                dot.classList.add('activity-dot');
+                dayCell.appendChild(dot);
+            }
+
+            // Gérer le clic pour ouvrir le pop-up
+            dayCell.addEventListener('click', () => {
+                selectedDate = dateString;
+                openPopup(fullDate);
+            });
+
+            calendarBody.appendChild(dayCell);
+        }
+    };
+
+    /**
+     * Ouvre et gère le pop-up d'informations/sélection d'activité.
+     * @param {Date} date - La date du jour sélectionné.
+     */
+    const openPopup = (date) => {
+        popup.classList.remove('hidden');
+        popupDateEl.textContent = `Informations pour le ${date.toLocaleDateString('fr-FR')}`;
+        
+        const activityForDate = activities.find(act => act.date === selectedDate);
+        const themeForDate = themes.find(t => {
+            if (!t.startDate || !t.endDate) return false;
+            const startDate = new Date(t.startDate);
+            const endDate = new Date(t.endDate);
+            return date >= startDate && date <= endDate;
+        });
+
+        // Afficher les infos du thème si le jour en a un
+        if (themeForDate) {
+            document.getElementById('theme-name').textContent = themeForDate.name;
+            document.getElementById('theme-period').textContent = `Du ${new Date(themeForDate.startDate).toLocaleDateString()} au ${new Date(themeForDate.endDate).toLocaleDateString()}`;
+            const themeImageEl = document.getElementById('theme-image');
+            if (themeForDate.image) {
+                themeImageEl.src = themeForDate.image;
+                themeImageEl.classList.remove('hidden');
+            } else {
+                themeImageEl.classList.add('hidden');
+            }
+            themeInfoDisplay.classList.remove('hidden');
+        } else {
+            themeInfoDisplay.classList.add('hidden');
+        }
+
+        // Afficher les infos de l'activité si le jour en a une
+        if (activityForDate) {
+            document.getElementById('activity-name').textContent = activityForDate.title;
+            const ageInfo = activityForDate.ageRange === 'custom' ? activityForDate.customAge : activityForDate.ageRange;
+            document.getElementById('activity-age-range').textContent = `Tranche d'âge: ${ageInfo || 'Non spécifié'}`;
+            document.getElementById('activity-description').textContent = `Description: ${activityForDate.description || ''}`;
+            document.getElementById('activity-material').textContent = `Matériel: ${activityForDate.material || ''}`;
+            const activityImageEl = document.getElementById('activity-image');
+            if (activityForDate.image) {
+                activityImageEl.src = activityForDate.image;
+                activityImageEl.classList.remove('hidden');
+            } else {
+                activityImageEl.classList.add('hidden');
+            }
+            activityInfoDisplay.classList.remove('hidden');
+            activitySelect.classList.add('hidden');
+            saveBtn.classList.add('hidden');
+            deleteBtn.classList.remove('hidden');
+        } else {
+            // Sinon, afficher le formulaire de sélection
+            activityInfoDisplay.classList.add('hidden');
+            activitySelect.classList.remove('hidden');
+            saveBtn.classList.remove('hidden');
+            deleteBtn.classList.add('hidden');
+            
+            activitySelect.innerHTML = '<option value="">-- Choisir une activité --</option>';
+            activities.forEach(act => {
+                if (!act.date) {
+                    const option = document.createElement('option');
+                    option.value = act.id;
+                    option.textContent = act.title;
+                    activitySelect.appendChild(option);
+                }
+            });
+        }
+    };
+
+    /**
+     * Ferme le pop-up.
+     */
+    const closePopup = () => {
+        popup.classList.add('hidden');
+    };
+
+    // --- Écouteurs d'événements ---
+
+    prevMonthBtn.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar(currentDate);
     });
-  }
 
-  function getContrastColor(hex) {
-    if (!hex) return "#fff";
-    hex = hex.replace("#", "");
-    if (hex.length === 3) hex = hex.split("").map(c => c + c).join("");
-    const r = parseInt(hex.slice(0, 2), 16);
-    const g = parseInt(hex.slice(2, 4), 16);
-    const b = parseInt(hex.slice(4, 6), 16);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.6 ? "#000" : "#fff";
-  }
+    nextMonthBtn.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar(currentDate);
+    });
 
-  // initial render
-  renderPlanning();
+    closeBtn.addEventListener('click', closePopup);
+
+    saveBtn.addEventListener('click', () => {
+        const activityId = activitySelect.value;
+        if (activityId) {
+            const activityToUpdate = activities.find(act => act.id === activityId);
+            if (activityToUpdate) {
+                const existingActivity = activities.find(act => act.date === selectedDate);
+                if (existingActivity) {
+                    delete existingActivity.date;
+                }
+                activityToUpdate.date = selectedDate;
+                localStorage.setItem('activities', JSON.stringify(activities));
+                renderCalendar(currentDate);
+                closePopup();
+            }
+        }
+    });
+
+    deleteBtn.addEventListener('click', () => {
+        const confirmDelete = confirm('Êtes-vous sûr de vouloir supprimer cette activité de ce jour?');
+        if (confirmDelete) {
+            const activityForDate = activities.find(act => act.date === selectedDate);
+            if (activityForDate) {
+                delete activityForDate.date;
+                localStorage.setItem('activities', JSON.stringify(activities));
+                renderCalendar(currentDate);
+                closePopup();
+            }
+        }
+    });
+
+    // Initialisation : affichage du calendrier
+    renderCalendar(currentDate);
 });
